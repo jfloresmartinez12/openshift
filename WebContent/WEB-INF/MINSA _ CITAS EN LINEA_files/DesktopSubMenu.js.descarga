@@ -1,0 +1,10 @@
+
+Ext.define('byt.DesktopSubMenu', {
+    
+    extend: 'byt.DesktopMenu',
+    
+    cls     : '',
+    
+    itemCls: 'x-desktop-menu-item x-desktop-submenu-item'
+    
+});

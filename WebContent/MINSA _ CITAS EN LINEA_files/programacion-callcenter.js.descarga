@@ -1,0 +1,2287 @@
+Ext.ns('his.prog');
+
+his.prog.editest = function(config){
+
+    return new Ext.Panel(Ext.apply({
+        
+        title       : 'Citas en Línea',
+        closable    : false,
+        layout      : 'border',
+        
+        initComponent : function(){
+            var me = this,
+                formA, formB;
+                
+            formA = new Ext.FormPanel({
+                bodyPadding   : 5,
+                region        : 'north',
+                flex          : 1,
+                fieldDefaults : {labelWidth: 65, anchor:'50%', style: 'margin: 4px;'},
+                baseCls       : 'x-back',
+                items: [
+                     HTML('<div class="titu_caja">Agenda tu Cita...</div>'+
+                     
+                     /*'<div class="ico_fdo22"><img src="ext/images/fdo_ico0.png" width="75" height="75"/></div></div>'+
+                        '<div class="pasos2">'+
+                        '<div class="fdo_total22">'+
+                        '<div><font style = "color:#6E6E6E; font-size:11.4px;"><b>Estimado usuario</b>, tomar en cuenta que el sistema de <b>Citas en línea</b> es válido sólo para <b>pacientes continuadores</b> del establecimiento, no para pacientes nuevos.<b>       Gracias</b></font></div>'+
+                        '<div  class="cajam22"></div>'+*/
+                        
+                        '<div class="pasos2">'+
+                        '<div class="fdo_total22">'+
+                        '<div><font style = "color:#6E6E6E; font-size:11.4px;"><b>Estimado usuario</b>, tomar en cuenta que el sistema de <b>Citas en línea</b> es válido sólo para <b><font style = "color:#1396DC; font-size:11.4px;">personas que cuentan con Historia Clínica</font></b> en el establecimiento.<b>       Gracias</b></font></div>'+
+                        //'<div><font style = "color:#6E6E6E; font-size:11.4px;"><b>Estimado usuario</b>, tomar en cuenta que el sistema de <b>Citas en línea</b> es válido sólo para <b><font style = "color:#1396DC; font-size:11.4px;">personas que cuentan con Historia Clínica</font></b> en el establecimiento.<b>       Gracias</b></font></div>'+
+                        '<div  class="cajam22">'+
+                        //'<div class="num">1.</div>'+
+                        '</div>'+
+                        //'</div><div class="ico_fdo"><img src="ext/images/fdo_ico0.png" width="75" height="75"/></div></div>'+
+                        //'<div><div class="ico_fdo22"><img src="ext/images/fdo_ico0.png" width="75" height="75"/></div></div>'+
+                        '</div><div class="ico_fdo22"><img src="ext/images/fdo_ico0.png"/></div></div>'+ /*width="75" height="75"*/
+                     
+                        '<div class="pasos">'+
+                        '<div class="fdo_total">'+
+                        '<div  class="cajam">Ubícate en el Establecimiento donde te atiendes</div>'+
+                        '<div  class="cajam2">'+
+                        '<div class="num">1.</div>'+
+                        '</div>'+
+                        '</div><div class="ico_fdo"><img src="ext/images/ico_step01.png" width="75" height="75"/></div></div>'+
+                        '<div class="pasos">'+
+                        '<div class="fdo_total">'+
+                        '<div  class="cajam">Encuentra tu médico tratante.</div>'+
+                        '<div  class="cajam2">'+
+                        '<div class="num">2.</div>'+
+                        '</div>'+
+                        '</div><div class="ico_fdo"><img src="ext/images/ico_step02.png" width="75" height="75"/></div></div>'+
+                        '<div class="pasos">'+
+                        '<div class="fdo_total">'+
+                        '<div  class="cajam">Ubica el día de tu preferencia.</div>'+
+                        '<div  class="cajam2">'+
+                        '<div class="num">3.</div>'+
+                        '</div>'+
+                        '</div><div class="ico_fdo"><img src="ext/images/ico_step03.png" width="75" height="75"/></div></div>'+
+                        '<div class="pasos">'+
+                        '<div class="fdo_total">'+
+                        '<div  class="cajam">Agenda tu cita.</div>'+
+                        '<div  class="cajam2">'+
+                        '<div class="num">4.</div>'+
+                        '</div>'+
+                        '</div><div class="ico_fdo"><img src="ext/images/ico_step04.png" width="75" height="75"/></div></div>'+
+                        '<div class="pasos">'+
+                        '<div class="fdo_total">'+
+                        '<div  class="cajam">Asiste a tu cita.</div>'+
+                        '<div  class="cajam2">'+
+                        '<div class="num">5.</div>'+
+                        '</div>'+
+                        '</div><div class="ico_fdo"><img src="ext/images/ico_step05.png" width="75" height="75"/></div></div><br/><br/><br/>'//+
+                        /*'<div class="ico_fdo22"><img src="ext/images/fdo_ico0.png" width="75" height="75"/></div></div>'+
+                        '<div class="pasos2">'+
+                        '<div class="fdo_total22">'+
+                        '<div><font style = "color:#6E6E6E; font-size:11.4px;"><b>Estimado usuario</b>, tomar en cuenta que el sistema de <b>Citas en línea</b> es válido sólo para <b>pacientes continuadores</b> del establecimiento, no para pacientes nuevos.<b>       Gracias</b></font></div>'+
+                        '<div  class="cajam22"></div>'*/),
+                     me.prueba = CREATE(TEXT('idest_','',6,{hidden: true})),
+                     TEXT('idflag','',6, {hidden:true}),
+                     
+                     FIELDSET({title : '<i><b>Establecimiento</b></i>', width:450, style:'margin-top:-520px; margin-left: 640px;'}, [
+                        me.fieldEst = CREATE(COMBOREMOTE('establecimiento', '', STORE(rootHISBYT +  'establecimiento', {C:'EESSCITA'}, 'estcodigo,estnombre,nombdep,flag', {reader: 'json'}), {
+                            queryParam      : 'param',
+                            include         : rootHISBYT + 'establecimiento_search.js',
+                            className       : 'his.establecimiento.search',
+                            hideLabel       : true,
+                            anchor          : '100%',
+                            flex : 1,
+                            listeners: {
+                                scope : me,
+                                'select': function(e,rs){
+                                    if(rs.length) {
+                                        rs = rs[0];
+                                        me.formA.ff('idest_').setValue(rs.data.estcodigo);
+                                        me.iddest = rs.data.estcodigo;
+                                        me.formA.ff('idflag').setValue(rs.data.flag);
+                                        me.getWs(rs.data.nombdep, rs.data.estcodigo, rs.data.flag);
+										
+                                        me.formA.ff('numdocpac').setValue('');
+                                        me.formA.ff('apelpatpac').setValue('');
+                                        me.txtapater.setValue('');
+                                        me.txtnames.setValue('');
+                                        me.txtpachis.setValue('');
+                                        me.txtfechnc.setValue('');
+										
+                                        me.txtapater.setVisible(false);
+                                        me.txtnames.setVisible(false);
+                                        me.txtpachis.setVisible(false);
+                                        me.txtfechnc.setVisible(false);
+										
+                                        me.cmbUps.setValue('');
+                                        me.cmbUps.setDisabled(false);
+                                    }
+                                }
+                            }
+                        }))
+                    ]),
+                    FIELDSET({title : '<i><b>Datos del Paciente</b></i>', width:450, style:"margin-left: 640px;"}, [
+                        HBOX([
+                            me.tipodoc = COMBO('idtipodoc', '<font style = "color:#6E6E6E; font-size:11.3px;"><i>Documento</i></font>', SIMPLESTORE([],'tipo,descrip'), {
+                                value: '00',
+                                width: 240,
+                                labelSeparator:'',
+                                allowBlank: true,
+                                height: 22
+                            }),
+                            TEXT('numdocpac', '', 20, {hideLabel: true, anchor: '25%', allowBlank: true, height: 22})
+                        ]),
+                        HBOX([
+                            TEXT('apelpatpac', '<font style = "color:#6E6E6E; font-size:11.3px;"><i>Ap. Pat.</i></font>' , 100, {anchor:'100%', labelSeparator:'', allowBlank: true, height: 22})
+                        ]),
+                        HBOX([
+                            me.txtapater = CREATE(TEXT('apelmatpac', '<font style = "color:#6E6E6E; font-size:11.3px;"><i>Ap. Mat.</i></font>' , 100, {anchor:'100%', labelSeparator:'', readOnly:true, height: 22, hidden:true}))
+                        ]),
+                        HBOX([
+                            me.txtnames = CREATE(TEXT('namecomp', '<font style = "color:#6E6E6E; font-size:11.3px;"><i>Nombres</i></font>' , 100, {anchor:'100%', labelSeparator:'', height: 22, hidden:true, readOnly:true}))
+                        ]),
+                        HBOX([
+                            me.txtpachis = CREATE(TEXT('pachis', '<font style = "color:#6E6E6E; font-size:11.3px;"><i>HCL</i></font>' , 100, {anchor:'50%', labelSeparator:'', readOnly:true, height: 22, hidden:true})),
+                            me.txtfechnc = CREATE(DATE('fechnacpac','<font style = "color:#6E6E6E; font-size:11.3px;"><i>Fecha Nac.</i></font>', {anchor:'50%', labelSeparator:'', readOnly:true, height: 22, hidden:true}))
+                        ]),
+                        HBOX([
+                            BUTTON('<u>Limpiar</u>', me.limpiar, me, {iconCls: 'tb-imglimp', style:'margin-top:15px; margin-left:230px;', width: 90, height: 40}),
+                            BUTTON('<b><u>Buscar</u></b>', me.infoPac, me, {iconCls: 'tb-imgbusc', style:'margin-top:15px; float:right; margin-left:15px;', width: 90, height: 40})
+                        ])
+                    ])
+                ] 
+            });
+            
+            formR = new Ext.FormPanel({
+                bodyPadding   : 5,
+                region        : 'center',
+                flex          : 1,
+                hidden        : true,
+                fieldDefaults : {labelWidth: 65, anchor:'50%', style: 'margin: 4px;'},
+                baseCls       : 'x-back',
+                items: [
+                    FIELDSET({title : '<i><b>Datos de Reprogramación</b></i>', width:450}, [
+                        HBOX([
+                            TEXT('codcita', '<font style = "color:#6E6E6E; font-size:11.3px;"><i>Nro. Cita</i></font>' , 100, {width: 200, labelSeparator:'', readOnly:true}),
+                            DATE('fecha','<font style = "color:#6E6E6E; font-size:11.3px;"><i>Fecha</i></font>', {width: 200, labelSeparator:'', readOnly:true,  maxValue:null, minValue: new Date()}),
+                            TEXT('ups', '<font style = "color:#6E6E6E; font-size:11.3px;"><i>UPS</i></font>' , 100, {width: 200, labelSeparator:'', readOnly:true})
+                        ]),
+                        HBOX([
+                            TEXT('codcon', '<font style = "color:#6E6E6E; font-size:11.3px;"><i>Consultorio</i></font>' , 100, {width: 200, labelSeparator:'', readOnly:true}),
+                            TEXT('descon', '' , 250, {width: 410, labelSeparator:'', readOnly:true})
+                        ]),
+                        HBOX([
+                            TEXT('codmed', '<font style = "color:#6E6E6E; font-size:11.3px;"><i>Médico</i></font>' , 100, {width: 200, labelSeparator:'', readOnly:true}),
+                            TEXT('mednom', '' , 250, {width: 410, labelSeparator:'', readOnly:true})
+                        ])
+                    ])
+                ] 
+            });
+
+            formB = new Ext.FormPanel({
+                bodyPadding   : 5,
+                region        : 'south',
+                flex          : 1,
+                fieldDefaults : {labelWidth: 105, anchor:'50%', style: 'margin: 4px;'},
+                baseCls       : 'x-back',
+                items: [
+                    FIELDSET({title : '<i><b>Consulta solicitada</b></i>', width:450, style:"margin-left: 640px;"}, [
+                        //me.cmbUps = CREATE(COMBOREMOTE('idups', '', STORE(rootHISBYT + 'ups',{C:'UPS', S:'GETLISTUPSXEST'/*, idestablecimiento:  6205*/},'servcodigo,servdescripcion', {/*reader: 'json'*/}), {
+                        me.cmbUps = CREATE(COMBOREMOTE('idups', '', STORE(rootHISBYT + 'cita',{C:'OBTENERUPS'/*, idestablecimiento:  6205*/},'servcodigo,servdescripcion', {reader: 'json', autoLoad:false}), {
+                                queryParam      : 'parameter',
+                                include         : rootHISBYT + 'ups_search.js',
+                                className       : 'his.ups.search',
+                                anchor          : '100%',
+                                labelWidth      : 30,
+                                checkChangeBuffer: 1000,
+				disabled  : false,
+                                listeners : {
+                                    scope : me,
+                                    'select' : function(e,rs){
+                                            rs = rs[0];
+                                            me.formB.ff('idups').setValue(rs.data.servcodigo);
+
+                                    }
+                                }
+                        }))
+                    ]),
+                    
+                    
+                    FIELDSET({title : '', width:450, style:"margin-left: 640px;"}, [
+                        me.btnV = CREATE(BUTTON('<b><u>Citas reservadas</u></b>', me.consultar, me, {iconCls: 'tb-imgagen', style:'margin-top:15px; float:right; margin-left:15px;', width: 160, height: 40, disabled: false})),
+                        me.btnC = CREATE(BUTTON('<b><u>Reservar cita</u></b>', me.verHorario, me, {iconCls: 'tb-imgrese', style:'margin-top:15px; float:right;', width: 160, height: 40, disabled: false})) 
+                    ]),
+                    HTML('<div class="img_citas"></div>')
+                ]
+            });
+            
+            var tpanel = new Ext.Panel({
+                region  : 'center',
+                border  : false,
+                flex    : 1.3,
+                baseCls : 'fondo-gris',
+                items   :   [HTML(
+                                '<div class="util"><a href="manual/tutorial-citas.pdf" title="Tutorial" target="_blank"><img src="ext/images/btn_util02.png" width="85" height="40" border="0" alt="Tutotial" title="Tutorial"/></a>'+
+                                '<a href="http://www.minsa.gob.pe/citas/video.asp" title="Video" target="_blank"><img src="ext/images/btn_util01.png" alt="Video" title="Video" width="85" height="40" border="0" /></a>'+
+                                '</div>'
+                            ),
+                            formA, formR, formB]
+            });
+            
+            me.items = [tpanel];
+            Ext.Panel.prototype.initComponent.call(me);
+            me.formA = formA.form;
+            me.formB = formB.form;
+            me.formR = formR.form;
+            
+            me.on('afterrender', function(){
+                
+				//Para obtener parámetro del link de citas, para identificar el establecimiento
+				var idparam = obtenerParametro('id');
+                if(idparam){
+                    callServer(rootHISBYT + 'establecimiento', {C:'EESSCITA', param: idparam}, function(v, j){
+                        v = Ext.decode(v);
+                        me.formA.ff('idest_').setValue(v.items[0].estcodigo);
+                        me.iddest = v.items[0].estcodigo;
+                        me.formA.ff('idflag').setValue(v.items[0].flag);
+                        me.fieldEst.setRawValue(v.items[0].estnombre);
+                        me.getWs(v.items[0].nombdep, v.items[0].estcodigo, v.items[0].flag);
+                    }, me);
+                }
+            },me);
+            
+        },
+        
+        getWs : function(ws,id,flag){
+            var me = this;
+                me.idwebservice = ws;
+            //alert("4123");
+            callServer(rootHISBYT + 'cita', {C:'WEBSERVICE', webservice: ws, idest: id, flag: flag}, function(v, j){
+                v = Ext.decode(v);
+                me.openDocumento();
+            }, me);
+        },
+        openDocumento : function(){
+            var me = this;
+            callServer(rootHISBYT + 'cita', {C:'DOCID'}, function(v, j){
+                v = Ext.decode(v);
+                me.tipodoc.store.loadData(v.documento);
+            }, me);
+        },
+
+        verHorario: function(){
+            var me = this,
+            descestab_ = me.formA.ff('establecimiento').getRawValue(),
+            ups = (me.formB.ff('idups').getRawValue()).split('-'),
+            idups_ = ups[0],
+            descups_ = ups[1],
+            
+            idtipodoc_ = me.formA.ff('idtipodoc').getRawValue(),
+            numdoc_ = me.formA.ff('numdocpac').getValue(),
+            nap_ = me.formA.ff('apelpatpac').getValue(),
+            
+            pachis_ = me.formA.ff('pachis').getValue(),
+            
+            fechaold = Ext.Date.format((new Date(me.formR.ff('fecha').getValue())),'Ymd'),
+            rvalue_ = (me.formR.ff('codcita').getValue()=="")? null : me.formR.ff('codcita').getValue()+'-'+fechaold+'-'+me.formR.ff('ups').getValue()+'-'+me.formR.ff('codcon').getValue()+'-'+me.formR.ff('codmed').getValue(),
+            
+            idflag_ = me.formA.ff('idflag').getValue();
+            
+            if(!idtipodoc_ || !numdoc_ || !nap_ || !pachis_){
+                Ext.Msg.message('Por favor ingresar los datos del paciente (<b>Tipo Doc, Número y Ap. Paterno</b>), y dar clic en el botón <b>Buscar</b>.');
+                return;
+            } else if(!idups_){
+                Ext.Msg.message('Para reservar una cita, debe ingresar la <b>UPS</b> (Unidad Productora de Servicio).');
+                return;
+            }
+            
+            var num = 0;
+            num++;
+            
+            var pac_ = pachis_+num,
+                dlgConfCitaprog = me['valpac' + pac_];
+            
+            if(!dlgConfCitaprog){
+               dlgConfCitaprog = me['valpac' + pac_] = his.prog.envio({parent: me});
+            }
+            
+            dlgConfCitaprog.show({descestab: descestab_, descups: descups_, idups: idups_, pachis: pachis_, rvalue: rvalue_, namecomp: me.namepac, idtipodoc: idtipodoc_, numdoc: numdoc_, idestablecimiento: me.prueba.getValue(), idflag: idflag_});
+
+        },
+        
+        capturarData: function(r){
+            var me = this;
+            me.formA.ff('idtipodoc').setValue(r.data.tipodoc);
+            me.formA.ff('numdocpac').setValue(r.data.dni);
+            me.formA.ff('fechnacpac').setValue(r.data.fechnacpac);
+            me.formA.ff('apelpatpac').setValue(r.data.apelpaterno);
+            me.formA.ff('apelmatpac').setValue(r.data.apelmaterno);
+            me.formA.ff('pachis').setValue(r.data.pachis);
+            
+        },
+        
+        boton: function(){
+            var me = this;
+            me.btnC.setDisabled(false);
+        },
+        
+        infoPac: function(){
+            var me = this, datos, metodo, array, 
+            //OBLIGATORIOS
+            idtipodoc_ = me.formA.ff('idtipodoc').getValue(),
+            numdoc_ = me.formA.ff('numdocpac').getValue(),
+            apelpatpac_ = me.formA.ff('apelpatpac').getValue(),
+            //
+            fechnacpac_ = (Ext.Date.format((new Date(me.formA.ff('fechnacpac').getValue())),'d/m/Y') != '31/12/1969')? Ext.Date.format((new Date(me.formA.ff('fechnacpac').getValue())),'d/m/Y'): null,
+            apelmatpac_ = me.formA.ff('apelmatpac').getValue();
+
+            /*if((!idtipodoc_) || (!numdoc_) || (!apelpatpac_)){
+                Ext.Msg.message('Se requiere ingresar datos del paciente <b>(Tipo de Doc., Número de Doc. y Ap. Paterno)</b>');
+                return;
+            }*/
+
+            //alert(me.prueba.getValue());
+            callServer(rootHISBYT + 'cita', {C:'PACDATOS', S:'GETINFO', idtipodoc:idtipodoc_, numdoc: numdoc_, fechnacpac: fechnacpac_, apelpatpac: apelpatpac_, apelmatpac: apelmatpac_, pachis: null, idestablecimiento: me.prueba.getValue()}, function(v, j){
+                v = Ext.decode(v);
+                
+                if(v.pacinfo[0]){
+				
+                    me.txtnames.setVisible(true);
+                    me.txtapater.setVisible(true);
+                    me.txtpachis.setVisible(true);
+                    me.txtfechnc.setVisible(true);
+            
+                    me.formA.setValues(v.pacinfo[0]);
+                    me.formA.ff('idtipodoc').setValue(v.pacinfo[0].tipodoc);
+                    me.formA.ff('numdocpac').setValue(v.pacinfo[0].dni);
+                    me.formA.ff('apelpatpac').setValue(v.pacinfo[0].apelpaterno);
+                    me.formA.ff('apelmatpac').setValue(v.pacinfo[0].apelmaterno);
+                    me.formA.ff('namecomp').setValue(v.pacinfo[0].nombres);
+                    var nm = (v.pacinfo[0].nombres).split(' '),
+                        nombres = (!nm[1])? nm[0] : nm[0]+'-'+nm[1],
+                        ap = (v.pacinfo[0].apelpaterno).split(' '),
+                        apelp = (!ap[1])? ap[0] : ap[0]+'-'+ap[1],
+                        am = (v.pacinfo[0].apelmaterno).split(' '),
+                        apelm = (!am[1])? am[0] : am[0]+'-'+am[1];
+                        
+                    me.namepac = apelp+'-'+apelm+'-'+nombres;
+                } else {
+                    me.txtapater.setVisible(false);
+                    me.txtnames.setVisible(false);
+                    me.txtpachis.setVisible(false);
+                    me.txtfechnc.setVisible(false);
+					
+                    if(!me.dlgValidarProg){
+                        me.dlgValidarProg = his.prog.validar({parent: me, establecimiento: me.formA.ff('establecimiento').getRawValue()});
+                    }
+                    me.dlgValidarProg.show({});
+                }
+                
+            }, me);
+            
+        },
+        
+        limpiar: function(){
+            var me = this;
+            
+            me.formA.ff('numdocpac').setValue('');
+            me.formA.ff('fechnacpac').setValue('');
+            me.formA.ff('apelpatpac').setValue('');
+            me.formA.ff('apelmatpac').setValue('');
+            me.formA.ff('pachis').setValue('');
+            me.formA.ff('namecomp').setValue('');
+            me.txtapater.setVisible(false);
+            me.txtnames.setVisible(false);
+            me.txtpachis.setVisible(false);
+            me.txtfechnc.setVisible(false);
+            me.cmbUps.setValue('');
+        },
+        
+        getForm : function(){
+            var me = this;
+            if(!me.dlgBuscPac){
+                me.dlgBuscPac = his.paccall.search({parent: me});
+                me.dlgBuscPac.on({
+                    scope: me,
+                    'select': function(v){
+                        me.capturarData(v);
+                    }
+                });
+            }
+            return me.dlgBuscPac;
+        },
+        
+        consultar : function(){
+            var me = this,
+                pachis_ = me.formA.ff('pachis').getValue(),
+                idtipodoc_ = me.formA.ff('idtipodoc').getValue(),
+                numdocpac_ = me.formA.ff('numdocpac').getValue(),
+                fechnacpac_ = me.formA.ff('fechnacpac').getValue(),
+                apelpatpac_ = me.formA.ff('apelpatpac').getValue(),
+                apelmatpac_ = me.formA.ff('apelmatpac').getValue(),
+                tipodoc_ = me.formA.ff('idtipodoc').getRawValue();
+                
+            if(!idtipodoc_ || !numdocpac_ || !apelpatpac_ || !pachis_){
+                Ext.Msg.message('Por favor ingresar los datos del paciente (<b>Tipo Doc, Número y Ap. Paterno</b>), y dar clic en el botón <b>Buscar</b>.');
+                return;
+            } else {
+                if(!me.dlgConsultar){
+                    me.dlgConsultar = his.prog.consultar({parent: me});
+                }
+                
+                me.dlgConsultar.show({idestablecimiento:me.prueba.getValue(), pachis: pachis_, idtipodoc:tipodoc_, numdocpac:numdocpac_, fechnacpac: fechnacpac_, apelpatpac: apelpatpac_, apelmatpac: apelmatpac_, namecomp: me.formA.ff('namecomp').getValue()});
+            }
+        
+        },
+        
+        reprogramar : function(){
+            var me = this,
+                pachis_ = me.formA.ff('pachis').getValue(),
+                idtipodoc_ = me.formA.ff('idtipodoc').getValue(),
+                numdocpac_ = me.formA.ff('numdocpac').getValue(),
+                fechnacpac_ = me.formA.ff('fechnacpac').getValue(),
+                apelpatpac_ = me.formA.ff('apelpatpac').getValue(),
+                apelmatpac_ = me.formA.ff('apelmatpac').getValue();
+
+            if(!me.dlgReprog){
+                me.dlgReprog = his.prog.reprogramar({parent: me});
+                me.dlgReprog.on({
+                   scope: me,
+                   'select': function(v){
+                       me.items.items[0].items.items[1].setVisible(true); //FormR visible true
+                       me.formR.setValues(v.data);
+                    }
+                });
+            }
+            me.dlgReprog.show({idestablecimiento:me.prueba.getValue(), pachis: pachis_, idtipodoc:idtipodoc_, numdocpac:numdocpac_, fechnacpac: fechnacpac_, apelpatpac: apelpatpac_, apelmatpac: apelmatpac_ });
+        },
+        
+        cancelar : function(){
+            var me = this,
+                pachis_ = me.formA.ff('pachis').getValue(),
+                idtipodoc_ = me.formA.ff('idtipodoc').getValue(),
+                numdocpac_ = me.formA.ff('numdocpac').getValue(),
+                fechnacpac_ = me.formA.ff('fechnacpac').getValue(),
+                apelpatpac_ = me.formA.ff('apelpatpac').getValue(),
+                apelmatpac_ = me.formA.ff('apelmatpac').getValue();
+
+            if(!me.dlgCancelprog){
+                me.dlgCancelprog = his.prog.cancelar({parent: me});
+            }
+            me.dlgCancelprog.show({idestablecimiento:me.prueba.getValue(), pachis: pachis_, idtipodoc:idtipodoc_, numdocpac:numdocpac_, fechnacpac: fechnacpac_, apelpatpac: apelpatpac_, apelmatpac: apelmatpac_ });
+        }
+        
+    }, config));
+};
+
+his.prog.panel = function(config){
+
+    return new Ext.Panel(Ext.apply({
+        
+        title : 'Panel-hijo',
+        layout: 'border',
+        border: false,
+        
+        //descestab: descestab_, descups: descups_, idups: idups_, idtipodoc: idtipodoc_, numdocpac: numdocpac_
+        
+        descestab: null, //Parámetros de entrada
+        descups: null,
+        idups: null,
+        pachis: null,
+        rvalue: null,
+        namecomp: null,
+        idtipodoc: null, 
+        numdoc: null,
+        correo: null,
+        celu: null,
+        idestablecimiento: null,
+        idflag: null,
+        
+        initComponent : function(){
+            var me = this,
+            
+            formCab = new Ext.FormPanel({
+                bodyPadding   : 5,
+                region        : 'north',
+                flex          : 0.1,
+                baseCls       : 'x-white',
+                fieldDefaults : {labelWidth: 90, anchor:'100%'/*, style: 'margin-left: 500px;'*/},
+                items: [
+                    FIELDSET({width:878, height:52, style:'margin-left:135px; background:#00596d;  padding:0px;'}, [
+                        HBOX([
+                            me.idanio = CREATE(COMBO('idanio','<b><font style = "color:#FFFFFF;">AÑO</font></b>',his.store.Anio,{/*value:(new Date()).getFullYear(),*/ width: 180, style: 'margin-top:15px', labelSeparator:'', readOnly:true})),
+                            me.idmes = CREATE(COMBO('idmes','<b><font style = "color:#FFFFFF;">MES</font></b>',SIMPLESTORE([], ['idper', 'descper']),{labelWidth:40/*, value:(Ext.Date.format(new Date(), 'm'))*/, width: 150, style: 'margin-top:15px', labelSeparator:'', readOnly:true})),
+                            me.idhoja = CREATE(NUMBER('idhoja','nro hoja',{value:1, hidden: true})),
+                            HTML('<div style="position:absolute; left:220px; top:7px;  width:100px; height:20px; background:#fffff;"><table border="0" width="200px"><tr><td width="20%" valign="middle"><img src="ext/images/icons/dia_dispo.jpg"></td><td style="color:#FFF; font-size:11px;">Día <b>disponible</b></td></tr><tr><td valign="middle"><img src="ext/images/icons/dia-no-dispo.jpg"></td><td style="color:#FFF; font-size:11px;">Día <b>no disponible</b></td></tr></table></div>'),
+                            BUTTON('', me.before, me, {iconCls: '', style:'margin-top:0px; margin-bottom:0px; background:url(ext/images/icons/fl-bef.png);', width: 60, height: 50, tooltip:'Mes <b>anterior</b> programado.'}),
+                            BUTTON('', me.next, me, {iconCls: '', style:'margin-left: 0px; margin-top:0px; margin-bottom:0px; background:url(ext/images/icons/fl-next.png);', width: 60, height: 50, tooltip:'Mes <b>siguiente</b> programado.'})
+                        ])
+                    ])
+                ] 
+            });
+            
+            me.medico =  his.prog.medico({
+                region  : 'west',
+                flex    : 1,
+                border  : false,
+                idups   : me.idups
+            });
+            
+            me.horario =  his.prog.conhorario({
+                region  : 'center',
+                flex    : 1,
+                border  : false,
+                idups   : me.idups,
+                pachis  : me.pachis,
+                rvalue  : me.rvalue,
+                namecomp: me.namecomp,
+                idtipodoc: me.idtipodoc, 
+                numdoc: me.numdoc,
+                correo: me.correo,
+                celu: me.celu,
+                idestablecimiento: me.idestablecimiento,
+                idflag: me.idflag
+            });
+
+            me.items = [me.horario, formCab];
+            
+            Ext.Panel.prototype.initComponent.call(me);
+            me.formCab = formCab.form;
+            
+            me.on('afterrender', me.reload, me);
+        },
+        
+        reload: function(){
+            var me = this;
+            me.setTitle(me.descestab + ' - ' + me.descups);
+            me.cargarProg();
+        },
+        
+        cargarHoja: function(i,t){
+            var me = this,
+            tam = me.idmes.store.data.length; //3
+            
+            if(t == 'N'){
+                if(i<=tam){
+                    mes = me.idmes.store.data.items[i-1].data.idper; //01,02,03 //en lugar de id es idper
+                    me.idmes.setValue(mes);
+                    me.idanio.setValue(parseInt(mes.substring(2,6)));
+                } else {
+                    me.idhoja.setValue(i-1);
+                    Ext.Msg.message('No existen más programaciones');
+                }
+            }
+            
+            if(t == 'B'){
+                if(i>0){
+                    mes = me.idmes.store.data.items[i-1].data.idper; //01,02,03 //en lugar de id es idper
+                    me.idmes.setValue(mes);
+                    me.idanio.setValue(parseInt(mes.substring(2,6)));
+                } else {
+                    me.idhoja.setValue(i+1);
+                    Ext.Msg.message('No existen más programaciones');
+                }
+            }
+            
+            if(me.idhoja.getValue() == 1){
+                var month = me.idmes.store.data.items[0].data.idper.substring(0,2); //en lugar de id es idper
+                var year = me.idmes.store.data.items[0].data.idper.substring(2,6); //en lugar de id es idper
+                
+                var month_ = me.idmes.store.data.items[0].data.idper; //en lugar de id es idper
+                var year_ = parseInt(me.idmes.store.data.items[0].data.idper.substring(2,6)); //en lugar de id es idper
+                
+                me.idmes.setValue(month_);
+                me.idanio.setValue(year_);
+            
+            } else{
+                var month = me.idmes.getValue().substring(0,2);
+                var year = me.idanio.getValue();
+            }
+            
+            return month+','+year;
+        },
+        
+        cargarProg: function(num,tipo){
+            var me = this;
+            
+            callServer(rootHISBYT + 'cita', {C:'PROGMES'}, function(v, j){
+                v = Ext.decode(v);
+                me.idmes.store.loadData(v.perprog);
+                var fech_ = me.cargarHoja(num,tipo);
+                if(!num && !tipo){
+                    me.horario.pruebaTemplate(null,null,fech_);
+                } else {
+                    me.horario.pruebaTemplate(num,tipo,fech_);
+                }
+            }, me);
+            
+        },
+        
+        next: function(){
+            var i=1, 
+            me = this,
+            idhoja_ = parseInt(me.idhoja.getValue());
+            
+            i = idhoja_+1;
+
+            me.idhoja.setValue(i);
+            me.cargarProg(i,'N');
+        },
+        
+        before: function(){
+            var i=2,
+            me = this,
+            idhoja_ = parseInt(me.idhoja.getValue());
+            
+            i = idhoja_-1;
+
+            me.idhoja.setValue(i);
+            me.cargarProg(i,'B');
+        }
+
+    }, config));
+};
+
+his.prog.medico = function(config){
+
+    return new Ext.Panel(Ext.apply({
+
+        layout: 'border',
+        idups : null,
+        
+        initComponent : function(){
+            var me = this, p;
+                var data = {
+                    name: 'A',
+                    company: 'B',
+                    city: 'D',
+                    state: 'E'
+                };
+                
+                var data2 = {
+                    name: 'AAAA',
+                    company: 'BBBBB',
+                    city: 'DDDDDD',
+                    state: 'EEEEE'
+                };
+            
+                me.p = new Ext.Panel({
+                    region: 'center',
+                    flex:1,
+                    border:false,
+                    renderTo: Ext.getBody()
+                });
+            
+            
+            me.items = [me.p];
+            Ext.Panel.prototype.initComponent.call(me);
+
+        },
+        
+        pruebaTemplate: function(fech){
+            var me = this, medicos;
+            var fecha_ = fech.split(','),
+                my = fecha_[1]+fecha_[0];
+                
+            p = {C:'OBTENERMEDICOS', idups: me.idups, mcod: null, idperiodo: my}
+            callServer(rootHISBYT + 'cita', p, function(v,j){
+                v = Ext.decode(v);
+                me.datos = {medicos:v.medicos};
+                
+                var tpl = new Ext.XTemplate(
+                    '<div>',
+                    '<tpl for="medicos">',
+                        '<div class="ficha">',
+                            '<div class="f_foto">',
+                            '<img src="ext/images/icons/untitled.png" width="90" height="100" class="img_s">',
+                            '</div>',
+                            '<div class="f_dato">',
+                            '<span class="t_1">Nombre: {name}</span><br/>',
+                            '<span class="t_2">Servicio: {ups} - {especialidad}</span><br/>',
+                            '<span class="t_3">Código de Médico: {medcod}<br/>',
+                            '<span class="t_2">Código de Consultorio: {codcon}</span><br/>',
+                            '</span>',
+                            '</div>',
+                        '</div> ',
+                    '</tpl>',
+                    '</div>'
+                );
+    
+                tpl.overwrite(me.p.body, me.datos);
+                
+            }, me);
+               
+        }
+
+    }, config));
+};
+
+
+his.prog.conhorario = function(config){
+
+    return new Ext.Panel(Ext.apply({
+        
+        layout: 'border',
+        idups : null,
+        pachis: null,
+        rvalue: null,
+        namecomp: null,
+        idtipodoc: null, 
+        numdoc: null,
+        correo: null,
+        celu: null,
+        idestablecimiento: null,
+        idflag: null,
+        
+        initComponent : function(){
+            var me = this;
+
+            me.p = new Ext.Panel({
+                region: 'center',
+                flex:5,
+                border:false,
+                autoScroll: true,
+                renderTo: Ext.getBody()
+            });
+
+            me.items = [me.p];
+            Ext.Panel.prototype.initComponent.call(me);
+
+        },
+        
+        cargar : function(){
+            var me = this;
+            callServer(rootHISBYT + 'cita', {C:'PROGMES'}, function(v, j){
+                v = Ext.decode(v);
+                me.idmes.store.loadData(v.perprog);
+                me.pruebaTemplate();
+            }, me);
+        },
+        
+        pruebaTemplate: function(ii,tt, fech){ //aumenté fech
+            var me = this, medicos = [], parts = [], ruta;
+            var my = fech.split(','),
+                    month = my[0],
+                    year = my[1],
+                    am = year+month;
+                    
+            var tpl = '<div>{data}</div>';
+            me.bookTpl1 = Ext.create('Ext.Template', tpl);
+            
+            /*pf = {C:'MEDICO', S:'GETBYID'};
+            callServer(rootHISBYT + 'cita', pf, function(v,j){
+                v = Ext.decode(v);
+                ruta = v.rutaimagendoctor;
+                
+            }, me);*/
+
+            p = {C:'OBTENER', idups: me.idups, idperiodo: am};
+            callServer(rootHISBYT + 'cita', p, function(v,j){
+                v = Ext.decode(v);
+                //inspect(v);
+                me.datos = {medicos:v.prog};
+
+                parts = v.msj.split('}');
+                
+                //me.dias={dias:[["06032013D","07032013D","13032013D","14032013D","20032013D","21032013D","27032013D"],["05032013D","08032013D","12032013D","19032013D","26032013D"],["09032013D","11032013D","16032013D","18032013D","25032013D","04032013D","30032013D"],["15032013D","23032013D"]]}
+                me.dias={dias:parts};
+    
+                var ln = me.datos.medicos.length;
+                var dataTpl ='';
+                for(var i=0; i<=(ln-1); i++){
+                    //dataTpl = dataTpl +'<table border="0" class="ficha"><tr><td><div style="position:relative; float:left;"><div class="f_foto"><img src="ext/images/icons/untitled.png" width="90" height="100" class="img_s"></div><div class="f_dato"><span class="t_1">Nombre: '+v.prog[i].name+'</span><br/><span class="t_2">Especialidad: </span><br />'+v.prog[i].ups+' - '+v.prog[i].especialidad+'<br/><span class="t_3">Código de Médico: '+v.prog[i].medcod+'<br/></span></div></div><div style="position:relative; float:left;">'+me.calendar(ii,tt, me.dias.dias[i], me.datos.medicos[i], fech)+'</div></td></tr></table><br />';
+                    //var image = 'http://localhost:8081/citas/ext/images/fotos_med/'+v.prog[i].medcod+'.jpg'!=undifined? 'ext/images/fotos_med/'+v.prog[i].medcod+'.jpg':'ext/images/icons/untitled.png';
+                    
+                    var image_ = 'ext/images/fotos_med/'+me.idestablecimiento+'/'+v.prog[i].medcod+'.jpg';
+                    
+                    //var image_ = ruta + v.prog[i].medcod+'.jpg';
+                    var image = null;
+                    
+                    if(UrlExists(image_)==true){
+                        image = image_
+                    } else {
+                        image = 'ext/images/fotos_med/undefined.jpg'
+                    }
+                    dataTpl = dataTpl +'<table border="0" class="ficha"><tr><td><div style="position:relative; float:left;"><div class="f_foto"><img src="'+image+'" width="90" height="100" class="img_s"></div><div class="f_dato"><span class="t_1">Nombre: '+v.prog[i].name+'</span><br/><span class="t_2">Servicio: </span><br />'+v.prog[i].ups+' - '+v.prog[i].especialidad+'<br/><span class="t_3">Código de Médico: '+v.prog[i].medcod+'<br/></span></div></div><div style="position:relative; float:left;">'+me.calendar(ii,tt, me.dias.dias[i], me.datos.medicos[i], fech)+'</div></td></tr></table><br />';
+                }
+
+                me.bookTpl1.overwrite(me.p.body, {data:dataTpl});
+                
+              }, me);
+
+        },
+        
+        encode: function(str) {
+            var me = this;
+            var dest = "";
+            var len = str.length;
+            var index = 0;
+            var code = null;
+            for (var i = 0; i < len; i++) {
+                var ch = str.charAt(i);
+                if (ch == " ") code = "%20";
+                else if (ch == "%") code = "%25";
+                else if (ch == ",") code = "%2C";
+                else if (ch == ";") code = "%3B";
+                else if (ch == "\b") code = "%08";
+                else if (ch == "\t") code = "%09";
+                else if (ch == "\n") code = "%0A";
+                else if (ch == "\f") code = "%0C";
+                else if (ch == "\r") code = "%0D";
+                if (code != null) {
+                dest += str.substring(index,i) + code;
+                index = i + 1;
+                code = null;
+                }
+            }
+            if (index < len)
+                dest += str.substring(index, len);
+                return dest;
+        },
+        
+        decode: function(str) {
+            var me = this;
+            var dest = "";
+            var len = str.length;
+            var index = 0;
+            var code = null;
+            var i = 0;
+            while (i < len) {
+                i = str.indexOf ("%", i);
+                if (i == -1)
+                break;
+                if (index < i)
+                dest += str.substring(index, i);
+                code = str.substring (i+1,i+3);
+                i += 3;
+                index = i;
+                if (code == "20") dest += " ";
+                else if (code == "25") dest += "%";
+                else if (code == "2C") dest += ",";
+                else if (code == "3B") dest += ";";
+                else if (code == "08") dest += "\b";
+                else if (code == "09") dest += "\t";
+                else if (code == "0A") dest += "\n";
+                else if (code == "0C") dest += "\f";
+                else if (code == "0D") dest += "\r";
+                else {
+                    i -= 2;
+                    index -= 3;
+                }
+            } 
+            if (index < len)
+            dest += str.substring(index, len);
+            return dest;
+        },
+        
+        getCookieVal: function(offset) {
+            var me = this;
+            var endstr = document.cookie.indexOf (";", offset);
+            if (endstr == -1)
+            endstr = document.cookie.length;
+            return me.decode(document.cookie.substring(offset, endstr));
+        },
+        
+        GetCookie: function(name) {
+            var me = this;
+            var arg = name + "=";
+            var alen = arg.length;
+            var clen = document.cookie.length;
+            var i = 0;
+            while (i < clen) {
+                var j = i + alen;
+                if (document.cookie.substring(i, j) == arg)
+                return me.getCookieVal (j);
+                i = document.cookie.indexOf(" ", i) + 1;
+                if (i == 0) break; 
+            }
+            return null;
+        },
+        
+        SetCookie: function(name, value, expires) {
+            var me = this;
+            document.cookie = name + "=" + me.encode(value) + ((expires == null) ? "" : ("; expires=" + expires.toGMTString()));
+        },
+        
+        arrayOfDaysInMonths: function(isLeapYear){
+            this[0] = 31;
+            this[1] = 28;
+            if (isLeapYear)
+            this[1] = 29;
+            this[2] = 31;
+            this[3] = 30;
+            this[4] = 31;
+            this[5] = 30;
+            this[6] = 31;
+            this[7] = 31;
+            this[8] = 30;
+            this[9] = 31;
+            this[10] = 30;
+            this[11] = 31;
+        },
+        
+        daysInMonth: function(month, year){
+            var me = this;
+            var isLeapYear = (((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0));
+            var monthDays = new me.arrayOfDaysInMonths(isLeapYear);
+            return monthDays[month];
+        },
+        
+        calendar: function(i,t, arr, arrm, fech_){//arr = array para el médico
+            var me = this;
+            var aDias = [arr.split(',')];
+            var aDiastam = aDias[0].length;
+            
+            var monthNames = "EneFebMarAbrMarJunJulAgoSepOctNovDic";
+            
+            var my = fech_.split(','),
+                month = my[0],
+                year = my[1],
+                idmm = month+year;
+
+            var numDays = me.daysInMonth((month-1), year);
+            var fDate = Ext.Date.parse('01/'+month+'/'+year, 'd/m/Y');
+            var firstDay = Ext.Date.getFirstDayOfMonth(fDate);
+
+            var startDay = firstDay;
+            var column = 0;
+            var envio = "";
+
+            envio+= '<table border="0" cellpadding="0" cellspacing="0" class="tbl_can">';
+            envio+= '<tr class="tbl_rel"><td align="center" valign="middle" class="tbl_cab">Domingo</td>';
+            envio+= '<td align="center" valign="middle" class="tbl_cab">Lunes</td>';
+            envio+= '<td align="center" valign="middle" class="tbl_cab">Martes</td>';
+            envio+= '<td align="center" valign="middle" class="tbl_cab">Miércoles</td>';
+            envio+= '<td align="center" valign="middle" class="tbl_cab">Jueves</td>';
+            envio+= '<td align="center" valign="middle" class="tbl_cab">Viernes</td>';
+            envio+= '<td align="center" valign="middle" class="tbl_cab">Sábado</td></tr>';
+            envio+= '<tr class="tbl_rel">';
+            
+            for (i = 0; i < startDay; i++){
+                envio+= '<td class="tbl_rel"></td>';
+                column++;
+            }
+            for (i=1; i <= numDays; i++){
+                var s = '<td align="center" valign="middle"  class="tbl_rel">' + "" + i+'</td>';
+                for(var j=0; j<=(aDiastam-1); j++){
+                var dma = String(i)+ "" + String(idmm);
+                if((i == eval((aDias[0][j]).substring(0,2))) && (idmm == (aDias[0][j]).substring(2,8)) && (year == (aDias[0][j]).substring(4,8)))
+                    if(((aDias[0][j]).substring(8,10)) == 'D'){
+                        s="<td class='tbl_rel x' align='center' valign='middle'><a class='link_his' onClick=javascript:diaClick('"+dma+"','"+arrm.medcod+"','"+arrm.ups+"','"+null+"','"+me.pachis+"','"+me.rvalue+"','"+me.namecomp+"','"+me.idtipodoc+"','"+me.numdoc+"','"+me.correo+"','"+me.celu+"','"+me.idestablecimiento+"','"+me.idflag+"') href=# >"+i+"</a></td>";
+                    } else {
+                        s='<td class="tbl_rel x1" align="center" valign="middle">'+i+"</td>";
+                    }
+                }
+                envio+= s;
+                
+                if (++column == 7){
+                    envio+= "</tr>";
+                    column = 0;
+                }
+            }
+            
+            envio+= "</table>";
+            
+            return envio;
+        },
+
+        next: function(){
+            var me = this;
+        },
+        
+        before: function(){
+            var me = this;
+        }
+
+    }, config));
+};
+
+//interfaz para asignar citas
+
+his.prog.asignarcita = function(config){
+   
+    return new Ext.Dialog(Ext.apply({
+        
+        title   : 'Cita Médica',
+        layout  : 'border',
+        border  : false,
+        width   : 580,
+        height  : 500,
+        
+        initComponent : function(){
+            var me = this,
+            
+            form = new Ext.FormPanel({
+                bodyPadding   : 5,
+                region        : 'north',
+                flex          : 0.23,
+                baseCls       : 'x-white',
+                fieldDefaults : {labelWidth: 50, anchor:'100%', style: 'margin: 4px'},
+                items: [
+                    FIELDSET({}, [
+                        HBOX([
+                            TEXT('name', '<font style = "color:#6E6E6E; font-size:11.3px;">Médico</font>' , 350, {labelSeparator:'', height:20, readOnly:true}),
+                            TEXT('medcod', '<font style = "color:#6E6E6E; font-size:11.3px;">Cod.</font>' , 8, {labelSeparator:'', height:20, width: 180, readOnly:true})
+                        ]), 
+                        HBOX([
+                            TEXT('especialidad', '<font style = "color:#6E6E6E; font-size:11.3px;">UPS</font>', 350, {labelSeparator:'', height:20, readOnly:true}),
+                            DATE('fecha','<font style = "color:#6E6E6E; font-size:11.3px;">Fecha</font>', {width: 180, labelSeparator:'', height:20, readOnly:true, maxValue:null, minValue: new Date()}),
+                            TEXT('codcon', '', 10, {hidden:true})
+                        ])
+                    ])
+                ] 
+            });
+            
+            me.grid = new Ext.grid.Panel({
+                region  : 'center',
+		hidden  : true,
+                border  : false,
+                remoteSort: true,
+                store	: SIMPLESTORE([],'id,hora,paciente,dni,nrohis,tipo,codconsult'),
+                columns : COLMODEL([
+                    {
+                        xtype: 'actioncolumn',
+                        width: 20,
+                        items: [{
+                            iconCls: 'grid-icon',
+                            getClass: function (v, md, r) {
+                                return r.data.tipo == 'O'? 'tb-userred' : 'tb-usergreen';
+                            }
+                        }]
+                    },
+                    ['hora','Hora',50],
+                    ['paciente','Paciente',0.1, {
+                        renderer: function(v,m,r){
+                            return r.data.tipo == 'O'? 'HORARIO RESERVADO' : '';
+                        }
+                    }],
+                    ['codconsult','CONSCONS',100, {hidden:true}]
+                ], {sortable: true}),
+                sorters: [{
+                    property : 'hora',
+                    direction: 'asc'
+                }],
+                bbar:[
+                    items = [
+                        '->',
+                        '-',
+                        { text: '<b>Asignar</b>' , iconCls: 'tb-checkk', scope: me, handler: me.obtenerName, itemId: 'btnAsig' },'-',
+                        { text: 'Cerrar' , iconCls: 'tb-close', scope: me, handler: me.onEsc, itemId: 'btnClose' },'-'
+                     ]
+                ],
+                tbar: [
+                    '->',
+                    '<table height="20px" align = "center" border = "0px" width="285px">'+
+                        '<tr style="text-align:right;">'+
+                            '<td valign="middle" style="text-align:right; color:#FFFFF; font-size:11px; padding:5px;" width="30px">'+
+                                '<img src="ext/images/icons/user_green.png">'+
+                            '</td>'+
+                            '<td valign="middle" style="text-align:right; color:#FFFFF; font-size:11px; padding:5px;" width="120px">'+
+                                'Horario <b>Disponible</b>'+
+                            '</td>'+
+                            '<td valign="middle" style="text-align:right; color:#FFFFF; font-size:11px; padding:5px;" width="30px">'+
+                                '<img src="ext/images/icons/user_red.png">'+
+                            '</td>'+
+                            '<td valign="middle" style="text-align:right; color:#FFFFF; font-size:11px; padding:5px;" width="105px">'+
+                                'Horario <b>Reservado</b>'+
+                            '</td>'+
+                            '<td valign="middle" style="text-align:left; color:#FFFFF; font-size:11px; padding:5px;" width="20px">'+
+                                '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp'+
+                            '</td>'+
+                        '</tr>'+
+                    '</table>'
+                ],
+                listeners: {
+                    scope: me,
+                    'itemclick': me.actualizarConsultorio
+                }
+            });
+            
+            me.gridTurno = new Ext.grid.Panel({
+                region  : 'center',
+                border  : false,
+                remoteSort: true,
+		hidden : true,
+                //store	: SIMPLESTORE([],'id,horaturno,tipo,codtur,turno'),
+                store	: SIMPLESTORE([],'id,horini,horfin,flag,codtur,turno'),
+                columns : COLMODEL([
+                    {
+                        xtype: 'actioncolumn',
+                        width: 20,
+                        items: [{
+                            iconCls: 'grid-icon',
+                            getClass: function (v, md, r) {
+                                return r.data.flag == 'D'? 'tb-usergreen' : 'tb-userred';
+                            }
+                        }]
+                    },
+                    ['horaturno','Turno',100, {
+                        renderer: function(v,m,r){
+                            return r.data.horini + ' - ' + r.data.horfin;
+                        }
+                    }],
+                    ['paciente','Disponibilidad',0.1, {
+                        renderer: function(v,m,r){
+                            return r.data.flag == 'D'? '' : 'TURNO RESERVADO';
+                        }
+                    }]
+                ], {sortable: true}),
+                sorters: [{
+                    property : 'horaturno',
+                    direction: 'asc'
+                }],
+                bbar:[
+                    items = [
+                        '->',
+                        '-',
+                        { text: '<b>Asignar</b>' , iconCls: 'tb-checkk', scope: me, handler: me.obtenerName, itemId: 'btnAsig' },'-',
+                        { text: 'Cerrar' , iconCls: 'tb-close', scope: me, handler: me.onEsc, itemId: 'btnClose' },'-'
+                     ]
+                ],
+                tbar: [
+                    '->',
+                    '<table height="20px" align = "center" border = "0px" width="285px">'+
+                        '<tr style="text-align:right;">'+
+                            '<td valign="middle" style="text-align:right; color:#FFFFF; font-size:11px; padding:5px;" width="30px">'+
+                                '<img src="ext/images/icons/user_green.png">'+
+                            '</td>'+
+                            '<td valign="middle" style="text-align:right; color:#FFFFF; font-size:11px; padding:5px;" width="120px">'+
+                                'Turno <b>Disponible</b>'+
+                            '</td>'+
+                            '<td valign="middle" style="text-align:right; color:#FFFFF; font-size:11px; padding:5px;" width="30px">'+
+                                '<img src="ext/images/icons/user_red.png">'+
+                            '</td>'+
+                            '<td valign="middle" style="text-align:right; color:#FFFFF; font-size:11px; padding:5px;" width="105px">'+
+                                'Turno <b>Reservado</b>'+
+                            '</td>'+
+                            '<td valign="middle" style="text-align:left; color:#FFFFF; font-size:11px; padding:5px;" width="20px">'+
+                                '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp'+
+                            '</td>'+
+                        '</tr>'+
+                    '</table>'
+                ]
+            });
+            
+            me.gridNo = new Ext.grid.Panel({
+                region      : 'north',
+                border      : false,
+                //flex        : 1,
+                height: 200,
+                hidden      : true,
+                store	    : SIMPLESTORE([],'hora,codconsult'),
+                columns     : COLMODEL([ 
+                    ['hora','Hora/Día',65,{align:'center', 
+                        renderer: function(v){
+                            return '<div  style="background-color:#EFEFEF; color:#2D5999";><b>' + v + '</div></b>';
+                        }
+                    }],
+                    ['codconsult','CONSCONSno',100, {hidden:true}]
+                ], {sortable: true})
+            });
+            
+            me.gridNot = new Ext.grid.Panel({
+                region      : 'south',
+                border      : false,
+                //flex        : 1,
+                height: 200,
+                hidden      : true,
+                store	    : SIMPLESTORE([],'hora,codconsult'),
+                columns     : COLMODEL([ 
+                    ['hora','Hora/Día',65,{align:'center', 
+                        renderer: function(v){
+                            return '<div  style="background-color:#EFEFEF; color:#2D5999";><b>' + v + '</div></b>';
+                        }
+                    }],
+                    ['codconsult','CONSCONSnot',100, {hidden:true}]
+                ], {sortable: true})
+            });
+            
+            me.no = new Ext.Panel({
+                region          : 'south',
+                flex            : 1,
+                border          : false,
+                layout          : 'border',
+                hidden          : false,
+                items: [me.gridNo, me.gridNot, me.gridTurno]
+            });
+            
+            me.items = [form, me.grid, me.no];
+            
+            Ext.Dialog.prototype.initComponent.call(me);
+            me.form = form.form;
+        },
+        
+        show : function(p){ 
+            var me = this;
+            p = p || {};
+            //p = dma, mcod, ups
+            Ext.Dialog.prototype.show.call(me);
+            var d = (p.dma.length < 8)? '0'+ p.dma : p.dma; 
+            me.dma = d.substring(0,2)+'/'+d.substring(2,4)+'/'+d.substring(4,8);
+            me.diaF = d.substring(4,8)+d.substring(2,4)+d.substring(0,2);
+            me.mcod = p.mcod;
+            me.ups = p.ups;
+            me.codcon = p.codcon;
+            me.pachis = p.pachis;
+            me.rvalue = p.rvalue;
+            me.namecomp = p.namecomp;
+            me.idtipodoc = p.idtipodoc;
+            me.numdoc = p.numdoc;
+            me.my = d.substring(4,8)+d.substring(2,4);
+            me.correo = p.correo;
+            me.celu = p.celu;
+            me.idestablecimiento = p.idestablecimiento;
+            me.idflag = p.idflag;
+			
+            me.form.ff('fecha').setValue(me.dma);
+            
+            if(me.idflag==1){
+                //me.citap ={citasprog:[{id:1, horaturno:"08:15 - 10:03",tipo:"D",codtur:"T01",turno:"M"},{id:2,horaturno:"11:15 - 13:03",tipo:"L",codtur:"T02",turno:"M"},{id:3,horaturno:"14:15 - 16:03",tipo:"D",codtur:"T03",turno:"T"}]};
+                me.gridTurno.setVisible(true);
+                me.getDatosTurno();
+				
+            } else {
+                me.no.setVisible(false);
+                me.grid.setVisible(true);
+                me.reload();
+            }
+            
+        },
+        
+        actualizarConsultorio: function(){
+            var me = this,
+                r = GETSELECTED(me.grid);
+                me.form.ff('codcon').setValue(r.data.codconsult);
+        },
+		
+        getDatosTurno: function(){
+            var me = this,
+            p = {C:'OBTTURNO', mcod: me.mcod, idups: me.ups, idperiodo:me.my, fecha:me.dma, codcon:"", fg:"N"};
+            callServer(rootHISBYT + 'cita', p, function(v,j){
+                v = Ext.decode(v);
+		me.form.setValues(v.turno[0]);
+                me.reloadTurno();
+            }, me);
+        
+        },
+        
+        reloadTurno: function(){
+            var me = this,
+            //p = {C:'OBTTURNO', idups: "221503", mcod: "1985", fecha: "06/02/2013", codcon: "116", fg:"T", idperiodo:""};
+            p = {C:'OBTTURNO', idups: me.ups, mcod: me.mcod, fecha: me.dma, codcon: me.form.ff('codcon').getValue(), fg:"T", idperiodo:""};
+            callServer(rootHISBYT + 'cita', p, function(v,j){
+                v = Ext.decode(v);
+                me.gridTurno.store.loadData(v.turno);
+            }, me);
+        },
+        
+        reload: function(){
+            var me = this, p;
+            me.dma.length;
+            p = {C:'LISTACITA', idups: me.ups, medcod: me.mcod, fecha: me.dma};
+            callServer(rootHISBYT + 'cita', p, function(v,j){
+                v = Ext.decode(v);
+                me.grid.store.loadData(v.citasprog);
+		me.gridNot.store.loadData([]);
+                me.getDatos();
+            }, me);
+            
+        },
+        
+        getDatos : function(){
+            var me = this,
+            p = {C:'OBTTURNO', mcod: me.mcod, idups: me.ups, idperiodo:me.my, fecha:me.dma, codcon:"", fg:"N"};
+			
+            callServer(rootHISBYT + 'cita', p, function(v,j){
+                v = Ext.decode(v);
+                me.form.setValues(v.turno[0]);
+				
+		me.ratiom = v.turno[0].ratio;
+                var inim_ = v.turno[0].horini;
+                if(inim_.length != 5){
+                    me.inim = '0'+inim_;
+                } else {
+                    me.inim = inim_;
+                }
+				
+                me.finm_ = v.turno[0].horfin;
+                me.finm = minMinutos(me.finm_,me.ratiom);
+                me.ccm = v.turno[0].codcon;
+                    
+		me.ratiot = (v.turno.length>1)? v.turno[1].ratio: null;
+                var init_ = (v.turno.length>1)? v.turno[1].horini: null;
+                    if(init_){
+                            if(init_.length != 5){
+                                me.init = '0'+init_;
+                            } else {
+                                me.init = init_;
+                            }
+                    } else {
+                        me.init = null;
+                    }
+                me.fint_ = (v.turno.length>1)? v.turno[1].horfin: null;
+		//me.fint = minMinutos(me.fint_,me.ratiom);
+		if(me.fint_) me.fint = minMinutos(v.turno[1].horfin,me.ratiot);
+                    me.cct = (v.turno.length>1)? v.turno[1].codcon: null;
+                    me.mostrar(me.inim,me.finm,me.ratiom,me.ccm);
+                if(me.init || me.fint || me.ratiot){ 
+                    me.mostrart(me.init,me.fint,me.ratiot,me.cct); 
+		}
+                me.getHoras();
+                
+            }, me);
+        },
+        
+        mostrar : function(hi,hf,rr,ccm){
+            var me = this,
+                s = me.gridNo.store,
+                    horaini = hi, 
+                    horafin= hf,
+                    minatepro = rr;
+                
+                me.gridNo.store.loadData([]);
+                    
+                r = Ext.ModelManager.create({hora: horaini, codconsult: ccm}, s.model);
+                s.add(r)
+            
+            while(valHora(horaini,horafin) !== true){
+                horaini = addMinutos(horaini,minatepro);
+                r = Ext.ModelManager.create({hora: horaini, codconsult: ccm}, s.model);
+                s.add(r);
+            }
+        },
+        
+        mostrart : function(hi,hf,rr,cct){
+		var me = this;
+            var me = this,
+                s = me.gridNot.store,
+                    horaini = hi, 
+                    horafin= hf,
+                    minatepro = rr;
+                
+                me.gridNot.store.loadData([]);
+                    
+                r = Ext.ModelManager.create({hora: horaini, codconsult: cct}, s.model);
+                s.add(r)
+            
+            while(valHora(horaini,horafin) !== true){
+                horaini = addMinutos(horaini,minatepro);
+                r = Ext.ModelManager.create({hora: horaini, codconsult: cct}, s.model);
+                s.add(r);
+            }
+			
+            me.init = null;
+            me.fint = null;
+            me.ratiot = null;
+            me.cct = null;
+        },
+        
+        getHoras : function(){
+            var me = this, items1 = [], items2 = [], items3 = [], arr3 = [], arr4 = [], items4 = [], i=0, flag=0, j=0, jj="", ii="", k=0;
+            
+            me.grid.store.each(function(dd){
+                rr = dd.data;
+                    items1.push([rr.hora,rr.codconsult]);
+            },me);
+            
+            me.gridNo.store.each(function(rd){
+                ro = rd.data;
+                    items2.push([ro.hora,ro.codconsult]);
+            },me);
+            
+            me.gridNot.store.each(function(rd){
+                dr = rd.data;
+                    items4.push([dr.hora,dr.codconsult]);
+            },me);
+            
+            for(i=0; i<items2.length; i++){
+                flag = 0;
+                for(j=0; j<items1.length; j++){
+                    jj = items1[j].toString();
+                    ii = items2[i].toString();
+                    if(jj==ii){
+                        flag = 1;
+                    }
+                }
+                if (flag==0){
+                    items3.push(items2[i]);
+                }
+            }
+            
+            ////////
+            k=0, i=0, j=0, jj = "", ii="", flag=0;
+            
+            for(i=0; i<items4.length; i++){
+                flag = 0;
+                for(j=0; j<items1.length; j++){
+                    jj = items1[j].toString();
+                    ii = items4[i].toString();
+                    if(jj==ii){
+                        flag = 1;
+                    }
+                }
+                if (flag==0){
+                    items3.push(items4[i]);
+                }
+            }
+            
+            for(k=0; k<items3.length; k++){
+                var s = me.grid.store,
+                    sss = items3[k].toString(),
+                    array = [],
+                    array = sss.split(','),
+                    hhora_ = array[0],
+                    ccodconsultorio_ = array[1]
+                //re = Ext.ModelManager.create({hora: items3[k]}, s.model);
+                re = Ext.ModelManager.create({hora: hhora_, codconsult: ccodconsultorio_}, s.model);
+                s.add(re);
+                //me.grid.selModel.select(re);
+            }
+            
+            me.grid.getView().refresh();
+            
+        },
+        
+        /*getHoras : function(){
+            var me = this, items1 = [], items2 = [], items3 = [], arr3 = [], arr4 = [], items4 = [], i=0, flag=0, j=0, jj="", ii="", k=0;
+            
+            me.grid.store.each(function(dd){
+                rr = dd.data;
+                items1.push([rr.hora,rr.codconsult]);
+            },me);
+            
+            me.gridNo.store.each(function(rd){
+                ro = rd.data;
+                items2.push([ro.hora,ro.codconsult]);
+            },me);
+            
+            me.gridNot.store.each(function(rd){
+                dr = rd.data;
+                items4.push([dr.hora,dr.codconsult]);
+            },me);
+            
+            for(i=0; i<items2.length; i++){
+                flag = 0;
+                for(j=0; j<items1.length; j++){
+                    jj = items1[j].toString();
+                    ii = items2[i].toString();
+                    if(jj==ii){
+                        flag = 1;
+                    }
+                }
+                if (flag==0){
+                    items3.push(items2[i]);
+                }
+            }
+            
+            ////////
+            k=0, i=0, j=0, jj = "", ii="", flag=0;
+            
+            for(i=0; i<items4.length; i++){
+                flag = 0;
+                for(j=0; j<items1.length; j++){
+                    jj = items1[j].toString();
+                    ii = items4[i].toString();
+                    if(jj==ii){
+                        flag = 1;
+                    }
+                }
+                if (flag==0){
+                    items3.push(items4[i]);
+                }
+            }
+            
+            for(k=0; k<items3.length; k++){
+                var s = me.grid.store,
+                    re = Ext.ModelManager.create({hora: items3[k]}, s.model);
+                    s.add(re);
+                    me.grid.selModel.select(re);
+            }
+            
+            me.grid.getView().refresh();
+            
+        },*/
+        
+        ordenar : function(){
+            var me = this, items = [];
+            me.grid.store.each(function(dd){
+                rr = dd.data;
+                    items.push([rr.hora]);
+            },me);
+            
+            items.sort();
+            me.grid.store.removeAll();
+            
+            for(var k=0; k<items.length; k++){
+                var s = me.grid.store,
+                    re = Ext.ModelManager.create({hora: items[k]}, s.model);
+                    s.add(re);
+                    me.grid.selModel.select(re);
+            }
+        },
+        
+        //////////////////////////////////
+        obtenerName: function(){
+            var me = this,
+                mensaje = 'Estimado Usuario, ¿está seguro de realizar la cita?';
+                Ext.Msg.confirm('Confirmar', mensaje , function(btn){
+                if (btn == 'yes') {
+                    me.asignarCita(me.namecomp);
+                }
+            }, me);
+        },
+        //////////////////////////////////
+        
+        replaceAll: function(text,busca,reemplaza){
+            while (text.toString().indexOf(busca) != -1){
+                text = text.toString().replace(busca,reemplaza);
+            }
+            
+            return text;
+        },
+
+        finalizarCita : function(prefac_, fecha_, hora_, mensaje_){
+            var me = this, xmldata = "";
+            
+            xmldata = "<SMS>";
+            xmldata = xmldata + "<authentification>";
+            xmldata = xmldata + "<username>minsa</username>";
+            xmldata = xmldata + "<password>minsa2011</password>";
+            xmldata = xmldata + "</authentification>";
+            xmldata = xmldata + "<message>";
+            xmldata = xmldata + "<sender>MINSA</sender>";
+            xmldata = xmldata + "<text>Cita RESERVADA. Para el "+fecha_+", hora "+hora_+", ";
+            //xmldata = xmldata + "nro. prefactura " + prefac_ + ", en "+ me.form.ff('especialidad').getValue()+". ";
+            xmldata = xmldata + (mensaje_? mensaje_ : "El número es: ") +" "+ prefac_ + ", en "+ me.form.ff('especialidad').getValue()+". ";
+            xmldata = xmldata + "Lo esperamos!</text>";
+            xmldata = xmldata + "</message>";
+            xmldata = xmldata + "<recipients>";
+            xmldata = xmldata + "<gsm>51" + me.celu + "</gsm>";
+            xmldata = xmldata + "</recipients>";
+            xmldata = xmldata + "</SMS>";
+
+            var nm = me.replaceAll(me.namecomp,'-',' '),
+                celu_= me.celu? 1:2;
+            
+            if(!me.dlgFinCitaprog){
+                me.dlgFinCitaprog = his.prog.finalizar({parent: me, xmldata1: xmldata, name: nm, prefac: prefac_, fecha: fecha_, hora: hora_, nombmed: me.form.ff('name').getValue(), espe: me.form.ff('especialidad').getValue(), celutipo: celu_, mensaje: mensaje_});
+            }
+            me.dlgFinCitaprog.show({idtipodoc:me.idtipodoc, numdoc: me.numdoc, prefac: prefac_, fecha: fecha_, hora: hora_, nombmed: me.form.ff('name').getValue(), espe: me.form.ff('especialidad').getValue(), mcod: me.mcod, codcon: me.codcon_, ups:me.ups, pachis:me.pachis, namecomp: nm, correo: me.correo, idestablecimiento: me.idestablecimiento});
+        },
+		
+        getMensajeValidar: function(msj_){
+                var me = this;
+                if(!me.dlgMsjValidar){
+                        me.dlgMsjValidar = his.prog.mensajeval({parent:me, msj: msj_});
+                }
+                me.dlgMsjValidar.show({});
+        },
+        
+        envioCorreo: function(prefac_,fecha_,hora_,mensaje_){
+            var me = this;
+            if(me.correo){
+                callServer(rootHISBYT + 'cita', {C:'ENVCORREO', correopac: me.correo, numpref: prefac_, fecha: fecha_, hora: hora_, pac: me.namecomp, medico: me.form.ff('name').getValue(), espec: me.form.ff('especialidad').getValue(), idestablecimiento: me.idestablecimiento, tipodoc:me.idtipodoc, hcl:me.pachis, nrodoc:me.numdoc, codmed:me.mcod, concod:me.form.ff('codcon').getValue(), mensaje:mensaje_}, function(v, j){
+                    Ext.Msg.message('Estimado <b>usuario</b>, se ha enviado una confirmación a su correo electrónico <b>'+me.correo+'</b>.');
+                }, me);
+            }
+        },
+        
+        asignarCita: function(n){
+            var me = this, r, init_, fint_, inim_, finm_;
+                if(me.idflag==1) r = GETSELECTED(me.gridTurno)
+                else r = GETSELECTED(me.grid)
+                 
+            if(!r) return;
+            
+            var name = me.replaceAll(me.namecomp,'-',' ');
+
+            if(me.idflag==0){
+                /*if(me.init && me.fint){
+                        init_ = (me.init.trim().length)<5? '0'+me.init.toString(): me.init.toString();
+                        fint_ = (me.fint.trim().length)<5? '0'+me.fint.toString(): me.fint.toString();
+                } else {
+                        inim_ = (me.inim.trim().length)<5? '0'+me.inim.toString(): me.inim.toString();
+                        finm_ = (me.finm.trim().length)<5? '0'+me.finm.toString(): me.finm.toString();
+                }
+                
+                dhora_ = (((r.data.hora[0]).trim()).length)<5? '0'+r.data.hora[0].toString(): r.data.hora[0].toString();
+		*/	
+		var horadato = [];
+                horadato = r.data.hora[0].split(':');
+                
+                dhora_ = (((horadato[0]).length)<2? '0'+r.data.hora.toString(): r.data.hora.toString());	
+			
+                /*if((dhora_>=init_)&&(dhora_<=fint_)){
+                    me.codcon_ = me.cct;
+                }
+                if((dhora_>=inim_)&&(dhora_<=finm_)){
+                    me.codcon_ = me.ccm;
+                }*/
+                me.codcon_ = r.data.codconsult;
+            }
+            
+            if(me.rvalue !== 'null'){
+                //rvalue_ = codcita-fechaold-ups-codcon-codmed
+                var values = (me.rvalue).split('-'),
+                    invnum_ = values[0],
+                    fechaold_ = values[1],
+                    codupsold_ = values[2],
+                    codconold_ = values[3],
+                    medcodold_ = values[4];
+
+                callServer(rootHISBYT + 'cita', {C:'REPROGCITA', fecha: me.diaF, hora: r.data.hora, medcod: me.mcod, codcon: codcon_, codups: me.ups, invnum: invnum_, fechaold: fechaold_, codupsold: codupsold_, codconold: codconold_, medcodold: medcodold_}, function(v, j){
+                    v = Ext.decode(v);
+                    me.reload();
+                    //Ext.Msg.message('La cita ha sido reprogramada con éxito');
+                    me.getMensajeValidar('La cita ha sido reprogramada con éxito');
+                }, me);
+                
+            } else {
+                
+                var hotur = (me.idflag==1)? r.data.codtur: r.data.hora,
+                    ccons = (me.idflag==1)? me.form.ff('codcon').getValue() : me.codcon_;
+               
+                //alert('HORTUR :' + hotur);
+                //alert('CCONS :' + ccons);
+               
+               
+                callServer(rootHISBYT + 'cita', {C:'GUARDARCITA', fecha: me.diaF, hora: hotur, medcod: me.mcod, codcon: ccons, codups: me.ups, pachis: me.pachis, pacnam: name}, function(v, j){
+                    v = Ext.decode(v);
+					
+                    var str = v.pacinfo,
+                    n = str.split('*');
+                    
+                    if(n[0].trim()=='V'){
+                        //Ext.Msg.message(n[1].trim());
+			me.getMensajeValidar(n[1].trim());
+                        return;
+                    } else if(n[0].trim()=='E') {
+                        //Ext.Msg.message('Se ha producido un error involuntario. Por favor, inténtelo más tarde.');
+			me.getMensajeValidar('Se ha producido un error involuntario. Por favor, inténtelo más tarde.');
+                        return;
+                    } else if(n[0].trim()=='O') {
+                        prefac = (n[1].trim()).split(':');
+                        if(me.idflag==1){
+                            me.reloadTurno();
+                            var horaturno = r.data.horini + ' - ' + r.data.horfin;
+                            //para envío de correo
+                            me.envioCorreo(prefac[1],me.diaF,hotur,prefac[0]);
+                            //Muestra mensaje para imprimir
+                            me.finalizarCita(prefac[1],me.dma,horaturno,prefac[0]);
+                        } else {
+                            me.reload();
+                            //para envío de correo
+                            me.envioCorreo(prefac[1],me.diaF,hotur,prefac[0]);
+                            //Muestra mensaje para imprimir
+                            me.finalizarCita(prefac[1],me.dma,r.data.hora,prefac[0]);
+                        }
+                    }
+                }, me);
+            }
+
+        }
+
+    }, config));
+};
+
+//Consultar citas agendadas
+his.prog.consultar = function(config){
+   
+    return new Ext.Dialog(Ext.apply({
+        
+        title   : 'Citas reservadas',
+        layout  : 'border',
+        border  : false,
+        width   : 640,
+        height  : 410,
+        
+        initComponent : function(){
+            var me = this,
+            
+            form = new Ext.FormPanel({
+                bodyPadding   : 5,
+                region        : 'north',
+                flex          : 2,
+                baseCls       : 'x-white',
+                fieldDefaults : {labelWidth: 60, anchor:'100%', style: 'margin: 4px'},
+                items: [
+                    FIELDSET({}, [
+                        HBOX([
+                            TEXT('idtipodoc', '<font style = "color:#6E6E6E; font-size:11.3px;">Documento</font>', 20, {readOnly: true, width: 210, labelSeparator:'', allowBlank: true, height: 22, readOnly: true}),
+                            TEXT('numdocpac', '', 20, {hideLabel: true, width: 140, readOnly: true}),
+                            DATE('fechnacpac','<font style = "color:#6E6E6E; font-size:11.3px;">Fecha Nac.</font>', {width: 215, labelSeparator:'', labelWidth: 60, readOnly: true})
+                        ]),
+                        HBOX([
+                            TEXT('apelpatpac', '<font style = "color:#6E6E6E; font-size:11.3px;">Ap. Pat.</font>', 150, {width: 210, labelSeparator:'', readOnly: true}),
+                            TEXT('apelmatpac', '<font style = "color:#6E6E6E; font-size:11.3px;">Ap. Mat.</font>', 150, {width: 210, labelSeparator:'', readOnly: true}),
+                            TEXT('pachis', '<font style = "color:#6E6E6E; font-size:11.3px;">HCL</font>', 100, {width: 145, labelSeparator:'', labelWidth: 40, readOnly: true})
+                        ])
+                    ])
+                ]
+            });
+            
+            me.grid = new Ext.grid.Panel({
+                region  : 'center',
+                flex    : 4,
+                border  : false,
+                remoteSort: true,
+                store	: SIMPLESTORE([],'id,fecha,hora,codcon,descon,ups,codmed,mednom,nrohis,codcita,numpre,descups'),
+                columns : COLMODEL([
+                    {
+                        xtype: 'actioncolumn',
+                        width: 20,
+                        items: [{
+                            iconCls: 'grid-icon',
+                            getClass: function (v, md, r) {
+                                return r.data.tipo == 'O'? 'tb-userred' : 'tb-usergreen';
+                            }
+                        }]
+                    },
+                    ['fecha','Fecha',90],
+                    ['hora','Hora',50],
+                    ['consult','Consultorio',180,{
+                        renderer: function(v,m,r){
+                            return r.data.codcon + ' - ' + r.data.descon;
+                        }
+                    }],
+                    ['medico','Médico',210,{
+                        renderer: function(v,m,r){
+                            return r.data.codmed + ' - ' + r.data.mednom;
+                        }
+                    }],
+                    ['upsdesc','Consulta solicitada',300, {
+                        renderer: function(v,m,r){
+                            return r.data.descups;
+                        }
+                    }]
+                    
+                ], {sortable: true}),
+                bbar:[
+                    items = [
+                        '->',
+                        '-',
+                        { text: '<b>Seleccionar</b>' , iconCls: 'tb-checkk', scope: me, handler: me.opciones, itemId: 'btnAsig' },'-',
+                        { text: 'Cerrar' , iconCls: 'tb-close', scope: me, handler: me.onEsc, itemId: 'btnClose' },'-'
+                    ]
+                ]
+            });
+            
+            me.items = [me.grid, form];
+            Ext.Dialog.prototype.initComponent.call(me);
+            me.form = form.form;
+            
+            me.on('afterrender', function(){
+                /*callServer(rootHISBYT + 'cita', {C:'DOCID'}, function(v, j){
+                    v = Ext.decode(v);
+                    me.tipodoc.store.loadData(v.documento);
+                }, me);*/
+            }, me);
+        },
+        
+        show : function(p){
+            var me = this;
+            p = p || {};
+            Ext.Dialog.prototype.show.call(me);
+            me.pachis = p.pachis;
+            //idestablecimiento, pachis, idtipodoc, numdocpac, fechnacpac, apelpatpac, apelmatpac 
+            me.form.setValues(p);
+            me.bParams = p;
+            me.reload();
+        },
+        
+        reload: function(){
+            var me = this;
+            me.grid.store.removeAll();
+            callServer(rootHISBYT + 'cita', {C:'CITASREP', idups: null, medcod: null, fecha: null, pachis: me.pachis}, function(v, j){
+                v = Ext.decode(v);
+                if(!v.reprog){
+                    Ext.Msg.message('Usted no tiene citas reservadas hasta la fecha.');
+                } else {
+                    me.grid.store.loadData(v.reprog);
+                }
+            }, me);
+            
+        },
+        
+        select : function(){
+            var me = this,
+            
+            r = GETSELECTED(me.grid);
+            if(!r) return;
+
+            if (me.fireEvent('select', r) !== false)
+            me.onEsc();
+        },
+        
+        opciones : function(){
+            var me = this,
+                //nombcomp_ = me.bParams.namecomp+' '+me.bParams.apelpatpac+' '+me.bParams.apelmatpac,
+                nombcomp_ = me.bParams.apelpatpac+' '+me.bParams.apelmatpac+ me.bParams.namecomp,
+                r = GETSELECTED(me.grid);
+            if(!r) return;
+            
+            for(var i=0; i<=1000; i++){
+                var num = i;
+            }
+            
+            var pac_ = me.pachis+i,
+            dlgEnvprog = me['valpac' + pac_];
+            
+            if(!dlgEnvprog){
+                dlgEnvprog = me['valpac' + pac_] = his.prog.envio({parent:me});
+            }
+            dlgEnvprog.show({tipoV:'2', fecha: r.data.fecha, hora: r.data.hora/*, espe: r.data.descon*/, medico: r.data.mednom, prefac: r.data.numpre, nombcomp: nombcomp_, dni: me.bParams.numdocpac, pachis: me.bParams.pachis, idtipodoc: me.form.ff('idtipodoc').getValue(), codmed:r.data.codmed, codcon: r.data.codcon, ups: r.data.descups, idestablecimiento: me.bParams.idestablecimiento});
+        }
+        
+  
+    }, config));
+};
+
+
+// Interfaz para pedir para correo y sms
+his.prog.envio = function(config){
+   
+    return new Ext.Dialog(Ext.apply({
+        
+        title   : '',
+        layout  : 'border',
+        border  : false,
+        width   : 450,
+        height  : 245,
+        
+        initComponent : function(){
+            var me = this, form;
+            
+            me.bbar = [
+                '->','-',
+                { text:'<b>Continuar</b>', handler: me.action, scope: me, iconCls: 'tb-checkk', hidden: false, itemId:'btnNext'},'-'
+            ];
+            
+            form = new Ext.FormPanel({
+                bodyPadding   : 5,
+                region        : 'center',
+                flex          : 1,
+                baseCls       : 'x-white',
+                fieldDefaults : {labelWidth: 90, anchor:'100%', style: 'margin: 4px'},
+                items: [
+                    FIELDSET({}, [
+                        HBOX([
+                            DISPLAY('','<font style = "color:#6E6E6E; font-size:11.4px;"><b>Si desea que se emita un correo electrónico y/o SMS al finalizar la reserva. Agregue los siguientes datos</b></font>',{labelWidth: 360, style: 'margin-top:10px; margin-bottom:10px; margin-left:0px;'})
+                        ]),
+                        HBOX([
+                            TEXT('correopac', '<font style = "color:#6E6E6E; font-size:11.3px;">Correo electrónico </font>', 150, {width: 315, labelSeparator:'', type:'mail', labelWidth:115})
+                        ]),
+                        HBOX([
+                            TEXT('celpac', '<font style = "color:#6E6E6E; font-size:11.3px;">Teléfono celular </font>', 9, {width: 315, labelSeparator:'', labelWidth:115})
+                        ])
+                    ])
+                ] 
+            });
+            
+            me.items = [form];
+            Ext.Dialog.prototype.initComponent.call(me);
+            me.form = form.form;
+            
+            me.on('afterrender', function(){
+                me.btnNext = me.findDockedByItemId('btnNext');
+                me.btnFin = me.findDockedByItemId('btnFin');
+            }, me);
+        },
+        
+        show : function(p){ 
+            var me = this;
+            p = p || {};
+            Ext.Dialog.prototype.show.call(me);
+            me.bParams = p;
+            me.form.reset();
+            
+        },
+        
+        dd: function(){
+            //alert('hola');
+        },
+        
+        validarSiNumero: function(numero){
+            if(!/^([0-9])*$/.test(numero)){
+                return 1
+            } else {
+                return 0
+            }
+        },
+        
+        validarEmail: function(mail) {
+            if(!/^[a-z][\w.-]+@\w[\w.-]+\.[\w.-]*[a-z][a-z]$/.test(mail)){
+                return 1
+            } else {
+                return 0
+            }
+        },
+
+        action: function(){
+            var me = this;
+            
+            var celu = me.form.ff('celpac').getValue(),
+                email = me.form.ff('correopac').getValue();
+            
+            if(celu){ 
+                if((me.validarSiNumero(celu))==1){
+                    Ext.Msg.message('El valor ingresado <b>'+celu+'</b> no es un número.');
+                    return
+                }
+            }
+            
+            if(email){ 
+                if((me.validarEmail(email))==1){
+                    Ext.Msg.message('El correo electrónico ingresado <b>'+email+'</b> no es correcto.');
+                    return
+                }            
+            }
+            
+            if(me.bParams.tipoV){
+                me.finalizar()
+            } else {
+                me.next()
+            }
+        },
+        
+        next: function(){
+            var me = this, 
+                correo_ = me.form.ff('correopac').getValue(), 
+                celu_ = me.form.ff('celpac').getValue();
+            me.onEsc();
+            MyApp.createWindow('his.prog.panel', { descestab: me.bParams.descestab, descups: me.bParams.descups, idups: me.bParams.idups, pachis: me.bParams.pachis,  rvalue: me.bParams.rvalue, namecomp: me.bParams.namecomp, idtipodoc: me.bParams.idtipodoc, numdoc: me.bParams.numdoc, correo: correo_, celu: celu_, idestablecimiento: me.bParams.idestablecimiento, idflag: me.bParams.idflag
+            }, rootHISBYT + 'programacion-callcenter.js');
+            
+        },
+        
+        finalizar: function(xpfactura){
+            var me = this, 
+                xmldata = "",
+                xcorreo = me.form.ff('correopac').getValue(), 
+                xcelu = me.form.ff('celpac').getValue();
+                
+                xmldata = "<SMS>";
+                xmldata = xmldata + "<authentification>";
+                xmldata = xmldata + "<username>minsa</username>";
+                xmldata = xmldata + "<password>minsa2011</password>";
+                xmldata = xmldata + "</authentification>";
+                xmldata = xmldata + "<message>";
+                xmldata = xmldata + "<sender>MINSA</sender>";
+                xmldata = xmldata + "<text>Cita RESERVADA. Para el "+me.bParams.fecha+", hora "+me.bParams.hora+", ";
+                xmldata = xmldata + "nro. prefactura " + me.bParams.prefac + ", en "+me.bParams.ups+". ";
+                xmldata = xmldata + "Lo esperamos!</text>";
+                xmldata = xmldata + "</message>";
+                xmldata = xmldata + "<recipients>";
+                xmldata = xmldata + "<gsm>51" + xcelu + "</gsm>";
+                xmldata = xmldata + "</recipients>";
+                xmldata = xmldata + "</SMS>";
+                
+                var celu_ = xcelu? 1:2;
+                
+                me.onEsc();
+                
+                for(var i=0; i<=1000; i++){
+                    var num = i;
+                }
+                
+                var iddni_ = me.bParams.dni+num,
+                    dlgFinalizar = me['valdni' + iddni_];
+                
+                    dlgFinalizar = me['valdni' + iddni_] = his.prog.finalizar({parent: me, xmldata1: xmldata, name:me.bParams.nombcomp, prefac:me.bParams.prefac, fecha: me.bParams.fecha, hora:me.bParams.hora, nombmed:me.bParams.medico, espe:me.bParams.ups, celutipo: celu_});
+                
+                dlgFinalizar.show({correo: xcorreo, namecomp: me.bParams.nombcomp, idtipodoc: me.bParams.idtipodoc, pachis:me.bParams.pachis, numdoc: me.bParams.dni, dia:me.bParams.fecha, hora:me.bParams.hora, prefac:me.bParams.prefac, nombmed:me.bParams.medico, codcon: me.bParams.codcon, mcod: me.bParams.codmed, ups: me.bParams.ups, idestablecimiento: me.bParams.idestablecimiento});
+            
+        }
+  
+    }, config));
+};
+
+his.prog.finalizar = function(config){
+   
+    return new Ext.Dialog(Ext.apply({
+        title   : '',
+        layout  : 'border',
+        border  : false,
+        width   : 485,
+        height  : 275,
+        
+        xmldata1 : null,
+        name: null, 
+        prefac: null, 
+        fecha: null, 
+        hora: null,
+        nombmed: null, 
+        espe: null,
+        celutipo: null,
+        mensaje: null,
+        
+	closable: false,
+        
+        initComponent : function(){
+            var me = this, form, formP;
+            
+            //idtipodoc:me.idtipodoc, numdoc: me.numdoc, prefac: prefac_, fecha: fecha_, hora: hora_, nombmed: me.form.ff('name').getValue(), espe: me.form.ff('especialidad').getValue(), mcod: me.mcod, codcon: me.codcon, ups:me.ups, pachis:me.pachis, namecomp: me.namecomp});
+            formP = new Ext.FormPanel({
+                bodyPadding   : 5,
+                region        : 'center',
+                flex          : 2.15,
+                //width   : 500,
+                //height  : 350,
+                baseCls       : 'x-white',
+                fieldDefaults : {labelWidth: 90, anchor:'100%', style: 'margin: 2px'},
+                items: [
+                    FIELDSET({height:164}, [
+                        HBOX([
+                            //HTML('<body><table border="1" width="100%" style="color: #585858; font-size:11.4px;" ><tr><td width="60" style="padding-right: 25px; padding-left: 30px; padding-top: 15px;"><img src="ext/images/menu/anamnesis.png" /></td><td>Sr(a): <b>'+me.name+'</b>, su cita ha sido reservada para el día <b>'+me.fecha+'</b> a las <b>'+me.hora+'</b> horas. En el servicio de <b>'+me.espe+'</b>, Médico: <b>'+me.nombmed+'</b>. '+ (me.mensaje? me.mensaje : 'El número es')+': <b>'+me.prefac+'</b>. <br /><br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Lo esperamos!</b></td></tr><table></body>')
+                            //HTML('<body><table border="0" width="100%" style="color: #585858; font-size:11.4px;" ><tr><td width="60" style="padding-right: 25px; padding-left: 30px; padding-top: 15px;"><img src="ext/images/menu/anamnesis.png" /></td><td style="padding-top:15px;">Sr(a): <b>GARCIA MARIA MARICELA DE</b>, su cita ha sido reservada para el día <b>19/09/2013</b> a las <b>09:15</b> horas. En el servicio de <b>CONSULTA EXTERNA-ADOLESCENTES</b>, Médico: <b>ROMERO MATURANO GLADYS</b>. El Número de prefactura es: <b>3334795</b>. <br /><br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Lo esperamos!</b></td></tr><table></body>')
+                            HTML('<body><table border="0" width="100%" style="color: #585858; font-size:11.4px;" ><tr><td width="60" style="padding-right: 25px; padding-left: 30px; padding-top: 15px;"><img src="ext/images/menu/anamnesis.png" /></td><td style="padding-top:15px;">Sr(a): <b>'+me.name+'</b>, su cita ha sido reservada para el día <b>'+me.fecha+'</b> a las <b>'+me.hora+'</b> horas. En el servicio de <b>'+me.espe+'</b>, Médico: <b>'+me.nombmed+'</b>. '+ (me.mensaje? me.mensaje : 'El número es')+': <b>'+me.prefac+'</b>. <br /><br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Lo esperamos!</b></td></tr><table></body>')
+                        ])
+                    ])
+                ] 
+            });
+            
+            form = new Ext.FormPanel({
+                //bodyPadding   : 5,
+                region        : 'south',
+                flex          : 0.95,
+                baseCls       : 'x-white',
+                fieldDefaults : {/*labelWidth: 90, anchor:'100%', */style: 'margin: 4px'},
+                items: [
+                    HBOX([
+                            me.btnSms = CREATE(HTML('<body><iframe name="central" width="30" height="10" frameborder="0" ><p>Su navegador no soporta frames</p></iframe><form name="frmenvio" method="post" action="http://api1.mobility.pe" target="central"><input name="sms" type="submit" id="sms" value="Envía por SMS" class="btn_sms" onclick=javascript:envMsj('+me.celutipo+') /><input name="xmldata" type="hidden" id="xmldata" size="150" value="'+me.xmldata1+'>+" /><br /><br /></form></body>',{disabled:true})),
+                            BUTTON('<span style="font-family:Arial; font-size:10px;"><b><u>Imprime tu cita</u></b></span>', me.envioCorreo, me, {iconCls: 'tb-imgprint', style:'margin-right:12px; margin-top: 20px;', width: 140, height: 40, disabled: false}),
+                            BUTTON('<span style="font-family:Arial; font-size:10px;"><u>Cerrar</u></span>', me.cerrar, me, {iconCls: 'tb-close24', style:'margin-left: 10px; margin-right: 5px; margin-top: 20px;', width: 140, height: 40, disabled: false})
+                    ])
+                ] 
+            });
+            
+            me.items = [form, formP];
+            Ext.Dialog.prototype.initComponent.call(me);
+            me.form = form.form;
+            me.formP = formP.form;
+        },
+        
+        show : function(p){ 
+            var me = this;
+            p = p || {};
+            Ext.Dialog.prototype.show.call(me);
+            
+            me.prefac_ = p.prefac? p.prefac : me.prefac;
+            me.fecha_ = p.fecha? p.fecha : me.fecha;
+            me.hora_ = p.hora? p.hora : me.hora;
+            me.idtipodoc = p.idtipodoc; 
+            me.numdoc = p.numdoc;
+            
+            me.bParams = p;
+        },
+        
+        reload: function(){
+            var me = this;
+            //alert('hola');
+        },
+        
+        envioCorreo: function(){
+            var me = this;
+            //agregar envio correo store
+            /*if(me.bParams.correo){
+                callServer(rootHISBYT + 'cita', {C:'ENVCORREO', correopac: me.bParams.correo, numpref: me.prefac_, fecha: me.fecha_, hora: me.hora_, pac: me.name, medico: me.nombmed, espec: me.espe, idestablecimiento: me.bParams.idestablecimiento, tipodoc:me.idtipodoc, hcl:me.bParams.pachis, nrodoc:me.numdoc, codmed:me.bParams.mcod, concod:me.bParams.codcon, mensaje: me.mensaje}, function(v, j){
+                    me.imprimir();
+                    Ext.Msg.message('Se ha enviado una confirmación a su correo electrónico <b>'+me.bParams.correo+'</b>.');
+                }, me);
+            } else {*/
+                me.imprimir();
+            //}
+        },
+        
+        imprimir: function(){
+            var me = this,
+                ups_ = me.bParams.espe?me.bParams.espe:me.bParams.ups,
+                mensaje_ = me.mensaje? me.mensaje : 'EL NUMERO ES';
+            MyApp.print({
+                url : 'reports',
+                params:{
+                    outputtype: 'PDF',
+                    reportname: '../his/reports/citas_comprobante',
+                    paramstoreport:{nombpac:me.bParams.namecomp, tipodoc:me.idtipodoc, hcl:me.bParams.pachis, nrodoc:me.numdoc, dia:me.fecha, hora:me.hora, prefnum:me.prefac, ups:ups_, consultorio:me.bParams.espe, concod:me.bParams.codcon, mediconom: me.nombmed, codmed:me.bParams.mcod, idestablecimiento: me.bParams.idestablecimiento, mensaje: mensaje_}
+                }
+            });
+        },
+        
+        cerrar: function(){
+            var me = this;
+            me.onEsc();
+            me.parent.onEsc();
+            if(me.parent.parent) {
+                me.parent.parent.onEsc();
+            }
+            else {
+                //MyApp.desktop.removeAll();
+                ////////
+                MyApp.desktop.container.items.items[2].close()
+            }
+        }
+  
+    }, config));
+};
+
+// Interfaz para pedir para correo y sms
+his.prog.validar = function(config){
+   
+    return new Ext.Dialog(Ext.apply({
+        
+        title   : 'Atención',
+        layout  : 'border',
+        border  : false,
+        width   : 370,
+        height  : 230,
+        
+        establecimiento: null,
+        
+        initComponent : function(){
+            var me = this, form;
+            
+            me.bbar = [ 
+                '->','-',
+                { text:'<b>Aceptar</b>', handler: me.onEsc, scope: me, iconCls: 'tb-checkk'},'-'
+            ];
+            
+            form = new Ext.FormPanel({
+                bodyPadding   : 5,
+                region        : 'center',
+                width   : 500,
+                height  : 350,
+                baseCls       : 'x-white',
+                fieldDefaults : {labelWidth: 90, anchor:'100%', style: 'margin: 4px'},
+                items: [
+                    FIELDSET({height:350}, [
+                        /*HBOX([
+                            DISPLAY('','<font style = "color:#6E6E6E; font-size:11.4px;"><b>Estimado usuario</b>, los datos ingresados no coinciden con los registrados en el <b>'+me.establecimiento+'</b>, por favor acercarse al establecimiento y actualizar sus datos para brindarle un mejor servicio.<br /><br /><b>Gracias</b></font>',{labelWidth: 320, style: 'margin-top:10px; margin-bottom:10px; margin-left:0px;', labelSeparator:''})
+                        ])*/
+						HBOX([
+							HTML('<img src="ext/images/--fdo_ico0.png" />', {width:30}),
+                            DISPLAY('','<font style = "color:#6E6E6E; font-size:11.4px;"><b>Estimado usuario</b>, los datos ingresados no coinciden con los registrados en el <b>'+me.establecimiento+'</b>, por favor acercarse al establecimiento y actualizar sus datos para brindarle un mejor servicio.<br /><br /><b>Gracias</b></font>',{labelWidth: 250, style: 'margin-top:10px; margin-bottom:10px; margin-left:15px;', labelSeparator:''})
+                        ])
+                    ])
+                ] 
+            });
+            
+            me.items = [form];
+            Ext.Dialog.prototype.initComponent.call(me);
+            me.form = form.form;
+        },
+        
+        show : function(p){ 
+            var me = this;
+            p = p || {};
+            Ext.Dialog.prototype.show.call(me);
+        }
+  
+    }, config));
+};
+
+// Primer Aviso
+his.prog.aviso = function(config){
+   
+    return new Ext.Dialog(Ext.apply({
+        
+        title   : 'Atención',
+        layout  : 'border',
+        border  : false,
+        width   : 370,
+        height  : 212,
+        closable    : false,
+        
+        initComponent : function(){
+            var me = this, form;
+            
+            me.bbar = [ 
+                '->','-',
+                { text:'<b>Continuar</b>', handler: me.inicio, scope: me, iconCls: 'tb-checkk'},'-'
+            ];
+            
+            form = new Ext.FormPanel({
+                bodyPadding   : 5,
+                region        : 'center',
+                width   : 500,
+                height  : 350,
+                baseCls       : 'x-white',
+                fieldDefaults : {labelWidth: 90, anchor:'100%', style: 'margin: 4px'},
+                items: [
+                    FIELDSET({}, [
+                        HBOX([
+                            DISPLAY('','<font style = "color:#6E6E6E; font-size:11.4px;"><b>Estimado usuario</b>, tomar en cuenta que el sistema de <b>Citas en línea</b> es válido sólo para <b>pacientes continuadores</b> del establecimiento, no para pacientes nuevos.<br /><br /><b>Gracias</b></font>',{labelWidth: 320, style: 'margin-top:10px; margin-bottom:10px; margin-left:0px;', labelSeparator:''})
+                        ])
+                    ])
+                ] 
+            });
+            
+            me.items = [form];
+            Ext.Dialog.prototype.initComponent.call(me);
+            me.form = form.form;
+        },
+        
+        show : function(){
+            var me = this;
+            //p = p || {};
+            Ext.Dialog.prototype.show.call(me);
+        },
+        
+        inicio: function(){
+            var me = this;
+            me.onEsc();
+            MyApp.createWindow('his.prog.editest', {}, rootHISBYT + 'programacion-callcenter.js');
+            
+        }
+        
+    }, config));
+};
+
+// Aviso para mensajes de validación que provienen del ws
+his.prog.mensajeval = function(config){
+   
+    return new Ext.Dialog(Ext.apply({
+        
+        title   : 'Atención',
+        layout  : 'border',
+        border  : false,
+        width   : 370,
+        height  : 180,
+        
+		msj: null,
+        
+        initComponent : function(){
+            var me = this, form;
+            
+            me.bbar = [ 
+                '->','-',
+                { text:'<b>Aceptar</b>', handler: me.onEsc, scope: me, iconCls: 'tb-checkk'},'-'
+            ];
+            
+            form = new Ext.FormPanel({
+                bodyPadding   : 5,
+                region        : 'center',
+                width   : 500,
+                height  : 350,
+                baseCls       : 'x-white',
+                fieldDefaults : {labelWidth: 90, anchor:'100%', style: 'margin: 4px'},
+                items: [
+                    FIELDSET({height:110}, [
+                        HBOX([
+                            HTML('<img src="ext/images/--fdo_ico0.png" />', {width:30}),
+                            DISPLAY('','<font style = "color:#6E6E6E; font-size:11.4px;">'+me.msj+'</font>',{labelWidth: 230, style: 'margin-top:15px; margin-bottom:10px; margin-left:30px;', labelSeparator:''})
+                        ])
+                    ])
+                ] 
+            });
+            
+            me.items = [form];
+            Ext.Dialog.prototype.initComponent.call(me);
+            me.form = form.form;
+        },
+        
+        show : function(p){ 
+            var me = this;
+            p = p || {};
+            Ext.Dialog.prototype.show.call(me);
+        }
+  
+    }, config));
+};

@@ -1,0 +1,110 @@
+
+.header .x-toolbar {
+    border-width: 0;
+      background:url(../images/fdo02.jpg) repeat;
+}
+
+.header-startmenu em.x-btn-arrow {
+    background-image : none;
+}
+
+.header-startmenu em.x-btn-arrow-right{
+    padding-right : 0px;
+}
+
+.header-startmenu button {
+    background-image : url( ../images/taskbar/btn-start.gif ) !important;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+
+.header-menu em.x-btn-arrow {
+    background-image : none;
+}
+
+.header-menu em.x-btn-arrow-right{
+    padding-right : 0px;
+}
+
+.header-menu button {
+    padding-left : 5px;
+    padding-right : 5px;
+}
+
+.header-menu .x-btn-toolbar-small-over {
+    background: none;
+}
+
+
+
+.logout {
+    background-image: url( ../images/icons/logout.gif ) !important;
+}
+
+/***************************************************************************/
+
+
+/************************************ x-desktop-menu ***************************************/
+
+.x-desktop .x-panel-body {
+    background:transparent url(../images/taskbar/cuadros.png) no-repeat bottom right;
+}
+
+.x-desktop-menu-wrap {
+    background:#fff url("../images/fdo02.png") no-repeat right top ;
+}
+
+.x-desktop-menu-item {
+    margin: 6px 0 6px 6px;
+    padding: 5px;
+    text-align: justify;
+    width: 164px;
+    height:38px;
+    background: url("../images/item_btn_menu_a.png") no-repeat;  cursor:pointer;
+    color: #999;
+}
+
+.x-desktop-menu-item.x-item-selected {
+   
+    
+    background: url("../images/item_btn_menu_b.png") no-repeat;
+    color: #666;
+   
+}
+
+.x-desktop-menu-item.x-item-over {
+   
+    background: url("../images/item_btn_menu_c.png") no-repeat;
+   color: #00b1d2;
+}
+
+.x-desktop-menu-item.x-item-selected.x-item-over {
+    background-color: #EFF5FB;
+}
+
+.x-desktop-submenu-item {
+    float: left;
+    width: 200px;
+    height: 110px;
+    padding: 5px;
+  
+}
+
+.x-desktop-menu-item span.title {
+    
+    font-size: 12px; 
+    padding-left:5px;
+}
+
+.x-desktop-menu-item span.legend {
+   
+    font-size: 12px;
+    
+}
+
+/***************************************************************************/
+
+.x-btn-group .x-form-item-label {
+    font-size: 12px;
+    
+}

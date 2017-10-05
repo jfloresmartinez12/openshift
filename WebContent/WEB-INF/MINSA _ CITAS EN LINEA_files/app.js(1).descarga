@@ -1,0 +1,67 @@
+/*
+ * MILKO E. SANCHEZ CASABONA
+ * Ext JS Library 4.0
+ */
+
+Ext.define('byt.App', {
+    
+    requires : ['Ext.app.Application', byt.desktop + '.Desktop'],
+    
+    extend : 'Ext.app.Application',
+    
+    controllers : [],
+    
+    useLoadMask : true,
+    
+    loadMaskFadeDuration: 1000,
+    
+    autoCreateViewport : false,
+    
+    desktop : null,
+
+    init    : Ext.emptyFn,
+    
+    /*
+    bindReady : function() {
+        Ext.Function.defer(this.onReady, 100, this);
+    },
+    */
+
+    launch : function(){
+        Ext.QuickTips.init();
+        this.createDesktop();
+        this.menu = this.desktop.menu;
+        this.tools = this.desktop.tools;
+        this.startMenu = this.desktop.startMenu;
+
+        this.init();
+
+        Ext.EventManager.on(window, 'beforeunload', this.onUnload, this);
+    },
+    
+    createDesktop : function(){
+        this.desktop = Ext.create(byt.desktop + '.Desktop', this);// new byt.Desktop(this);
+    },
+
+    loadMenu : function(ms, append){
+        if(append !== true)
+            this.clearMenu();
+        
+        this.menu.addItem(ms);
+    },
+
+    clearMenu : function(){
+        this.menu.removeAll();
+    },
+    
+    getDesktop : function(){
+        return this.desktop;
+    },
+
+    onUnload : function(e){
+        if(this.fireEvent('beforeunload', this) === false){
+            e.stopEvent();
+        }
+    }
+
+});

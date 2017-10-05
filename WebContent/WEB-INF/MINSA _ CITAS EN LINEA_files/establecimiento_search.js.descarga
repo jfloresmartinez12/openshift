@@ -1,0 +1,107 @@
+Ext.ns('his.establecimiento');
+
+his.establecimiento.search = function(config){
+    
+    return new Ext.Dialog(Ext.apply({
+        
+        width  : 680,
+        height : 420,
+        title  : 'Búsqueda de Establecimiento de Salud',
+        layout : 'border',
+        
+        idflag : null,
+        
+        initComponent : function(){
+            
+            var me = this,
+                form;
+            
+                form = new Ext.FormPanel({
+                region        : 'north',
+                bodyPadding   : 5,
+                baseCls       : 'x-plain',
+                height        : 65,
+                baseCls       : 'x-white',
+                //bodyStyle   : 'padding-top:10px;padding-right:10px;',
+                fieldDefaults : {labelWidth: 35, anchor:'100%', style: 'margin: 4px'},
+                items: [
+                    FIELDSET({height:55}, [
+                         HBOX([
+                            TEXT('estnombre','<font style = "color:#6E6E6E; font-size:11.3px;">EESS </font>', 150, {width: 350, labelSeparator:''})
+                         ])
+                    ])
+                ],
+                keys: { key: 13, handler: me.reload, scope: me }
+            });
+            
+            var storeEess  = STORE(rootHISBYT + 'establecimiento', {C:'SEARCH', idflag: me.idflag}, 'estcodigo, estnombre, nombdep,flag', {  autoLoad: false, reader: 'json',
+                                beforeLoad: function(p){
+                                    Ext.apply(p, me.form.getValues());
+                                }});
+            
+            me.grid = new Ext.grid.Panel({
+                region  : 'center',
+                flex    : 1,
+                //multiSelect : true,
+                store   : storeEess,
+                columns : COLMODEL([
+                    {xtype: 'rownumberer', width:30},
+                    ['estcodigo', 'Establecimiento', 0.1, {hidden:true}],
+                    ['estnombre', 'Establecimiento', 0.3],
+                    ['nombdep', 'WebService', 0.3, {hidden:true}],
+                    ['flag', 'Flag', 0.1, {hidden:true}]
+                ], {sortable: true}),
+                dockedItems: [{
+                        xtype: 'pagingtoolbar',
+                        itemId: 'idPaginacion',
+                        store: storeEess,
+                        dock: 'bottom',
+                        displayInfo: true
+                    } 
+                ] ,
+                listeners: {
+                    scope: me,
+                    'itemdblclick': me.select
+                },
+                tbar: [
+                    '->',
+                    { text:'<b>Buscar</b>', handler: me.reload, scope: me , iconCls: 'tb-refresh16'}
+                ],
+                bbar:[
+                    '->',
+                    { text: '<b>Seleccionar</b>', handler: me.select, scope: me, iconCls:'tb-insert16'}  
+                ]
+            });
+            
+            //me.tools = [{id:'refresh', handler: me.reload, scope: me}];
+            me.items = [form, me.grid];
+            Ext.Dialog.prototype.initComponent.call(me);
+            me.form = form.form;
+            me.grid.on('itemdblclick', me.select, me);
+            storeEess.on('beforeload', function(st, oper){
+                oper.params = me.form.getValues();
+            }, me);
+            me.on('afterrender', me.reload, me);
+        },
+        
+        show : function(p){
+            var me = this;
+            Ext.Dialog.prototype.show.call(this);
+            //me.bParams = Ext.apply({}, p);
+        },
+        
+        reload : function(){
+            var me = this;
+            me.grid.findDockedByItemId('idPaginacion').moveFirst();
+        },
+        
+        select : function(){
+            var me = this,
+                r = GETSELECTED(me.grid);
+            if(!r) return;
+            if (me.fireEvent('select', r) !== false)
+                me.onEsc();
+        }
+        
+    }, config));
+};

@@ -1,0 +1,178 @@
+Ext.ns('his.ups');
+
+his.ups.search = function(config){
+    
+    return new Ext.Dialog(Ext.apply({
+        
+        width  : 480,
+        height : 450,
+        title  : 'Consulta Solicitada',
+        layout : 'border',
+        
+        codigo: null,
+        idestablecimiento: null,
+        
+        initComponent : function(){
+            
+            var me = this,
+                form;
+            
+            form = new Ext.FormPanel({
+                region        : 'north',
+                bodyPadding   : 5,
+                baseCls       : 'x-plain',
+                height        : 65,
+                baseCls       : 'x-white',
+                //bodyStyle   : 'padding-top:10px;padding-right:10px;',
+                fieldDefaults : {labelWidth: 35, anchor:'100%', style: 'margin: 4px'},
+                items: [
+                    FIELDSET({height:55}, [
+                         HBOX([
+                            HIDDEN('codigo'),
+                            TEXT('servcodigo', '<font style = "color:#6E6E6E; font-size:11.3px;">Código </font>', 150, {width: 205, labelSeparator:''}),
+                            TEXT('servdescripcion', '<font style = "color:#6E6E6E; font-size:11.3px;">Descripción </font>', 150, {width: 205, labelSeparator:'', labelWidth: 65})
+                        ])
+                    ])
+                ],
+                keys: { key: 13, handler: me.reload, scope: me }
+            });
+            
+            /*me.storePer  = STORE(rootHISBYT + 'ups', {C:'UPS', S:'SEARCH'}, 'idups,descups,estaups', {  autoLoad: false, reader: 'json', 
+                                beforeLoad: function(p){
+                                    Ext.apply(p, me.form.getValues());
+                                }});*/
+            
+            me.idestablec = me.idestablecimiento? me.idestablecimiento : SysConfig.idestablecimiento;
+            
+            //me.storePer  = STORE(rootHISBYT + 'ups', {C:'UPS', S:'GETLISTUPSXEST', idestablecimiento: me.idestablec}, 'estcodigo,servcodigo,esfechasusp,esestado,servdescripcion', {  autoLoad: false/*, reader: 'json'*/, 
+            //me.storePer  = STORE(rootHISBYT + 'ups', {C:'UPS', S:'GETLISTUPSXEST', idestablecimiento: me.idestablec}, 'servcodigo,servdescripcion,esestado,estcodigo,esfechasusp', {  autoLoad: false/*, reader: 'json'*/,
+            me.storePer  = STORE(rootHISBYT + 'cita', {C:'OBTENERUPS', idestablecimiento: me.idestablec, idtipodoc: "1", numdoc:"41266763"}, 'servcodigo,servdescripcion,esestado,estcodigo,esfechasusp', {autoLoad: false/*, reader: 'json'*/,                   
+                                beforeLoad: function(p){
+                                    Ext.apply(p, me.form.getValues());
+                                }});
+                                
+            me.grid = new Ext.grid.Panel({
+                region  : 'center',
+                flex    : 1,
+                multiSelect : true,
+                store   : me.storePer,
+                columns : COLMODEL([
+                    //['idups', 'Código', 120],
+                    //['descups', 'Unidad Prestadora de Servicio (UPS)', 0.1]
+                    //['servcodigo', 'Código', 120],
+                    ['servdescripcion', 'Consulta Solicitada', 0.1]
+                ], {sortable: true}),
+                /*dockedItems: [{
+                        xtype: 'pagingtoolbar',
+                        itemId: 'idPaginacion',
+                        store: me.storePer,
+                        dock: 'bottom',
+                        displayInfo: true
+                    } 
+                ] ,*/
+                listeners: {
+                    scope: me,
+                    'itemdblclick': me.select
+                },
+                tbar: [
+                    '->',
+                    { text:'<b>Buscar</b>', handler: me.reload, scope: me , iconCls: 'tb-refresh16'}
+                ],
+                bbar:[
+                    '->',
+                    { text: '<b>Seleccionar</b>', handler: me.select, scope: me, iconCls:'tb-insert16'}  
+                ]
+            });
+            
+            me.items = [form, me.grid];
+            Ext.Dialog.prototype.initComponent.call(me);
+            me.form = form.form;
+            me.storePer.on('beforeload', function(st, oper){
+                oper.params = me.form.getValues();
+                oper.params.codigo = (me.codigo)? me.codigo: me.form.ff('codigo').getValue();
+            }, me);
+            //me.on('afterrender', me.reload, me);
+        },
+        
+        show : function(p){
+            var me = this;
+            Ext.Dialog.prototype.show.call(me);
+            me.bParams = Ext.apply({}, p);
+            me.form.ff('codigo').setValue(me.bParams.codigo);
+            if(p.grilla) me.grilla = p.grilla;
+            me.reload();
+            
+        },
+        
+        reload : function(){
+            var me = this;
+            //me.grid.findDockedByItemId('idPaginacion').moveFirst();
+            callServer(rootHISBYT + 'cita', {C:'OBTENERUPS'}, function(v, j){
+                v = Ext.decode(v);
+                //me.grid.store.loadData(v.pacinfo);
+                me.grid.store.loadData(v.items);
+            }, me);
+        },
+        
+        /*select : function(){
+            var me = this,
+                r = GETSELECTED(me.grid);
+            if(!r) return;
+            if(Ext.isFunction(me.bParams.callback)){
+                me.bParams.callback.call(me.bParams.scope || me, r);
+            }
+            
+            if (me.fireEvent('select', r) !== false)
+                me.onEsc();
+        }*/
+        
+        /*select : function(){
+            var me = this,
+            items = [],
+            r;
+            if(me.grilla){
+                var r = GETSELECTED(me.grid,true);
+                for(var i=0; i <= (r.length-1) ; i++){
+                    var d = r[i].data;
+                    items.push([d.idups,d.descups].join(']]'));
+                }
+                var r = items.join('<->');
+            
+            } else {
+                var r = GETSELECTED(me.grid);
+                if(!r) return;
+                if(Ext.isFunction(me.bParams.callback)){
+                    me.bParams.callback.call(me.bParams.scope || me, r);
+                }
+            }
+            if (me.fireEvent('select', r) !== false)
+            me.onEsc();
+        }*/
+        
+        select : function(){
+            var me = this,
+            items = [],
+            r;
+            if(me.grilla){
+                var r = GETSELECTED(me.grid,true);
+                for(var i=0; i <= (r.length-1) ; i++){
+                    var d = r[i].data;
+                    items.push([d.servcodigo,d.servdescripcion].join(']]'));
+                }
+                var r = items.join('<->');
+            
+            } else {
+                var r = GETSELECTED(me.grid);
+                if(!r) return;
+                if(Ext.isFunction(me.bParams.callback)){
+                    me.bParams.callback.call(me.bParams.scope || me, r);
+                }
+            }
+            if (me.fireEvent('select', r) !== false)
+            me.onEsc();
+        }
+   
+    }, config));
+};
+
+

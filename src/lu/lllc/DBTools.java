@@ -101,6 +101,68 @@ public class DBTools {
 		return bookList;
 
 	}
+	
+	ArrayList<Cita> getAllCitaList() {
+		ArrayList<Cita> citaList = new ArrayList<Cita>();
+		Statement statement = null;
+		ResultSet result = null;
+
+		Connection connection = getConnction();
+
+		try {
+			statement = connection.createStatement();
+		} catch (SQLException e) {
+			System.out.println("Error. Can not create the statement: " + e);
+			return null;
+		}
+
+		String searchString = "SELECT * FROM citas";
+
+		try {
+			result = statement.executeQuery(searchString);
+		} catch (SQLException e) {
+			System.out.println("Error. Problem with executeUpdate: " + e);
+			return null;
+		}
+
+		try {
+			while (result.next()) {
+				Cita cita = new Cita();
+				long id = result.getLong("id");
+				cita.setId(id);
+
+				String establecimiento = result.getString("establecimiento");
+				cita.setEstablecimiento(establecimiento);
+				
+				String tipoDocumento = result.getString("tipoDocumento");
+				cita.setTipoDocumento(tipoDocumento);
+				
+				long numDocumento = result.getLong("numDocumento");
+				cita.setNumDocumento(numDocumento);				
+
+				String apellidoPaterno = result.getString("apellidoPaterno");
+				cita.setApellidoPaterno(apellidoPaterno);
+
+				String consultaSolicitada = result.getString("consultaSolicitada");
+				cita.setConsultaSolicitada(consultaSolicitada);
+
+				citaList.add(cita);
+			}
+		} catch (SQLException e) {
+			System.out.println("Error. Problem reading data: " + e);
+		}
+
+		try {
+			result.close();
+			statement.close();
+			connection.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return citaList;
+
+	}
 
 	// Here we use the PreparedStatement because the data come from the user
 	void addNewBookAndAuthor(String title, String description, float price,
@@ -140,6 +202,46 @@ public class DBTools {
 
 			statement1.close();
 			statement2.close();
+			connection.close();
+
+		} catch (SQLException e) {
+			try {
+				if (connection != null)
+					// In case of an error we rollback the update
+					connection.rollback();
+			} catch (SQLException e1) {
+			}
+			System.out.println("Error when adding a new book " + e);
+
+		}
+
+	}
+	
+	// Here we use the PreparedStatement because the data come from the user
+	void addCita(String establecimiento, String tipoDocumento, long numDocumento,
+			String apellidoPaterno, String consultaSolicitada) {
+
+		Connection connection = getConnction();
+
+		try {
+			PreparedStatement statement1 = connection.prepareStatement(
+					"INSERT INTO citas (establecimiento, tipoDocumento, numDocumento, "
+					+ "apellidoPaterno, consultaSolicitada) VALUES (?,?,?,?,?)",
+					Statement.RETURN_GENERATED_KEYS);
+
+			connection.setAutoCommit(false);
+			statement1.setString(1, establecimiento);
+			statement1.setString(2, tipoDocumento);
+			statement1.setLong(3, numDocumento);
+			statement1.setString(4, apellidoPaterno);
+			statement1.setString(5, consultaSolicitada);
+
+			statement1.executeUpdate();
+
+			// we commit the update
+			connection.commit();
+
+			statement1.close();
 			connection.close();
 
 		} catch (SQLException e) {

@@ -1,0 +1,128 @@
+Ext.namespace('his.store');
+
+his.store.Anio = SIMPLESTORE([[2013, '2013'],[2014, '2014'],[2015, '2015'],[2016, '2016'],[2017, '2017'],[2018, '2018'],[2019, '2019']], ['id', 'text']);
+
+//Suma minutos a la hora ingresada
+function addMinutos(vchora , vcadd){
+    var hora=0, minuto=0, horaadd=0, minutoadd=0, resp ='', ht=0, mt=0, armi=[];
+    
+    armi = vchora.split(':');
+    
+    hora = eval(armi[0]);
+    minuto = eval(armi[1]);
+    
+    horaadd = 0;
+    minutoadd = eval(vcadd);
+    
+    ht = (hora + horaadd);
+    mt = (minuto + minutoadd);
+    
+    while (mt >= 60)
+    {
+        mt = mt - 60;
+        ht = ht + 1;
+    }
+    
+    while (ht >= 24)
+    {
+        ht = ht - 24;
+    }
+    
+    resp = Ext.String.leftPad(ht,2,'0') + ':' + Ext.String.leftPad(mt,2,'0');
+    
+    return resp;
+}
+
+function minMinutos(vchora , vcadd){
+    var hora=0, minuto=0, horaadd=0, minutoadd=0, resp ='', ht=0, mt=0, armi=[];
+    
+    armi = vchora.split(':');
+    
+    hora = eval(armi[0]); //12
+    minuto = eval(armi[1]); //00
+    
+    horaadd = 0;
+    minutoadd = eval(vcadd);//20
+    
+	if(minuto<minutoadd){
+		if(hora==0){
+			ht = 23;
+		} else {
+			ht = (hora - 1);
+		}
+		mt = (minuto - minutoadd + 60);
+	} else {
+		ht = hora;
+		mt = (minuto - minutoadd);
+	}
+	
+    resp = Ext.String.leftPad(ht,2,'0') + ':' + Ext.String.leftPad(mt,2,'0');
+    
+    return resp;
+}
+
+//Validador entre horas
+function valHora(hori, horf){// hori > horf
+    var hora1=0,minuto1=0,hora2=0,minuto2=0, resp = false;
+    
+    arhi = hori.split(':');
+    arhf = horf.split(':');
+    
+    hora1 = eval(arhi[0]);
+    minuto1 = eval(arhi[1]);
+    
+    hora2 = eval(arhf[0]);
+    minuto2 = eval(arhf[1]);
+    
+    if(hora1>hora2){
+        resp=true;
+    } else if(hora1==hora2){
+        if(minuto1>=minuto2){
+            resp=true;
+        } else resp=false;
+    } else resp=false;
+    
+    return resp;
+}
+
+/*********************** FUNCIONES PARA GENERAR CITA *******************/
+
+JS.include(rootHISBYT + 'programacion-callcenter.js');
+
+function diaClick(dia,mcod_,ups_,codcon_,pachis_,rvalue_,namecomp_,idtipodoc_,numdoc_,correo_,celu_,idest_,idflag_){
+
+    var me = this;
+         me.d = dia;
+            /*
+            if(!me.dlgAsignar){
+                me.dlgAsignar = his.prog.asignarcita({});
+            }
+            me.dlgAsignar.show({dma: dia, mcod: mcod_, ups: ups_, codcon: codcon_, pachis: pachis_, rvalue: rvalue_, namecomp: namecomp_, idtipodoc: idtipodoc_, numdoc: numdoc_, correo:correo_, celu:celu_, idestablecimiento:idest_});
+            */
+        var num_ = mcod_+numdoc_,
+	dlgAsignar = me['valasig' + num_];
+        if(!dlgAsignar){
+            dlgAsignar = me['valasig' + num_] = his.prog.asignarcita({});
+        }
+        //dlgAsignar.show({dma: dia, mcod: mcod_, ups: ups_, codcon: codcon_, pachis: pachis_, rvalue: rvalue_, namecomp: namecomp_, idtipodoc: idtipodoc_, numdoc: numdoc_, correo:correo_, celu:celu_, idestablecimiento:idest_});
+        dlgAsignar.show({dma: dia, mcod: mcod_, ups: ups_, codcon: null, pachis: pachis_, rvalue: rvalue_, namecomp: namecomp_, idtipodoc: idtipodoc_, numdoc: numdoc_, correo:correo_, celu:celu_, idestablecimiento:idest_, idflag:idflag_});
+    
+}
+
+function envMsj(tipo){
+    var me = this;
+    if(tipo==1){
+        Ext.Msg.message('El SMS ha sido enviado con éxito.');
+    } else {
+        Ext.Msg.message('Ud. no ingresó el número de celular anteriormente, el SMS no puede ser enviado.');
+    }
+    
+}
+
+function UrlExists(url){
+    var http = new XMLHttpRequest();
+    http.open('HEAD', url, false);
+    http.send();
+    return http.status!=404;
+    
+}

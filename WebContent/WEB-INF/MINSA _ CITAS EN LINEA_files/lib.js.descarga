@@ -1,0 +1,198 @@
+Ext.namespace('byt.store');
+
+byt.store.meses = SIMPLESTORE([['01', 'Enero'], ['02', 'Febrero'], ['03', 'Marzo'], ['04', 'Abril'], ['05', 'Mayo'], ['06', 'Junio'], ['07', 'Julio'], ['08', 'Agosto'], ['09', 'Setiembre'], ['10', 'Octubre'], ['11', 'Noviembre'], ['12', 'Diciembre']], ['id', 'text']);
+
+Ext.define('Ext.form.field.VTypes', (function() {
+    
+    var numTest = /^(\d*$)/i,
+        numtelTest = /^(\d{3}[-]?){1,2}(\d{4})$/,
+        letras = /^[a-zA-Z_\xE1\xE9\xED\xF3\xFA\xC1\xC9\xCD\xD3\xDA\xD1\xF1\x2E\x2D\x20\s]+$/,
+        alphanumerico = /^[a-zA-Z0-9_\xE1\xE9\xED\xF3\xFA\xC1\xC9\xCD\xD3\xDA\xD1\xF1\x2E\x2D\x20\s]+$/,
+        mail = /^(\w+)([\-+.][\w]+)*@(\w[\-\w]*\.){1,5}([A-Za-z]){2,6}$/,
+        numcelTest = /^(\d{4}[-]?){1,2}(\d{5})$/;
+
+
+    return {
+        singleton: true,
+        alternateClassName: 'Ext.form.VTypes',
+        
+        'mail' : function(v){
+            return mail.test(v);
+        },
+        'mailText' : 'Ingrese un mail válido "usuario@ejemplo.com"',
+        'mailMask' : /[a-z0-9_\.\-@\+]/i,
+
+        'letras' : function(v){
+            return letras.test(v);
+        },
+        'letrasText' : 'El campo sólo acepta Letras',
+        'letrasMask' : /[a-zA-Z_\xE1\xE9\xED\xF3\xFA\xC1\xC9\xCD\xD3\xDA\xD1\xF1\x2E\x2D\x20\s]/i,
+
+        'alphanumerico' : function(v){
+            return alphanumerico.test(v);
+        },
+        'alphanumericoText' : 'El campo sólo acepta Letras y Números',
+        'alphanumericoMask' : /[a-zA-Z0-9_\xE1\xE9\xED\xF3\xFA\xC1\xC9\xCD\xD3\xDA\xD1\xF1\x2E\x2D\x20\s]/i,
+        
+        'url' : function(v){
+            return url.test(v);
+        },
+        
+        'num' : function(val, field) {
+            return numTest.test(val);
+        },
+        'numText' : 'El campo sólo acepta Números',
+        'numMask' : /[\d]/i,
+        
+        numtel: function(val, field) {
+            return numtelTest.test(val);
+        },
+        numtelText : 'El campo sólo acepta teléfonos (123-4567)',
+        numtelMask : /[\d-]/i,
+        
+        numcel: function(val, field) {
+            return numcelTest.test(val);
+        },
+        numcelText : 'El campo sólo acepta némeros celulares (1234-56789)',
+        numcelMask : /[\d-]/i
+    };    
+})());
+
+/***************************Panel Generico************************/
+ 
+byt.store.panelTpl= function(config){
+    
+   return new Ext.Panel({
+        id          : config.idPanel,
+        height      : 200,
+        border      : false,
+        bodyStyle   : 'padding:10px;',
+        autoScroll: true,
+        items       : [{}]
+    },config);
+};
+
+
+/*
+Ext.namespace('sig.ensayo');
+
+Ext.onReady(function(){
+        sig.storeAnios = SIMPLESTORE([['2005'], ['2006'], ['2007'], ['2008'], ['2009'], ['2010'], ['2011'], ['2012'], ['2013'], ['2014'], ['2015'], ['2016'], ['2017'], ['2018'], ['2019'], ['2020']]);
+        sig.storePais = STORE(rootSIG + 'ubigeo', {C: 'PAIS', S:'GETLIST'}, ['id', 'text']);
+        sig.storeDpto = STORE(rootSIG + 'ubigeo', {C:'DPTO', S:'GETLIST'}, ['id', 'text']);
+
+        sig.storeYesNo = SIMPLESTORE([['SI'], ['NO']], ['id']);
+        sig.storeSN = SIMPLESTORE([['S', 'SI'], ['N', 'NO']], ['id', 'text']);
+        sig.storeTipoDocumento = SIMPLESTORE([['01', 'DNI', 8], ['04', 'RUC', 11]], ['id', 'text', 'longitud']);
+    }
+);
+
+function SEARCH(name, label, config) {
+    config = formatConfig(name, label, config);
+    var fld = new Ext.ux.Search( Ext.apply({
+        hiddenName: name,
+        fieldLabel: label,
+        allowBlank: true
+//        valueField: 'codicultint',
+//        displayField: function(r){ return r.data.nombciencul + ' - ' + r.data.nombcomupai; },
+//        include: 'global/buscarcultivo.js',
+//        className: 'sigia.global.buscarcultivo'
+    }, config));
+    return fld;
+}
+
+function PERSONA(name, label, config) {
+    config = config || {};
+    if(config.allowBlank === false) config.labelStyle = 'color:red;' + (config.labelStyle || '');
+    var fld = new Ext.ux.Search( Ext.apply({
+        hiddenName:name,
+        fieldLabel:label,
+        allowBlank:true,
+        valueField: 'personaid',
+        displayField: 'nombres',
+        include: rootSIG + 'global/buscarpersona.js',
+        className: 'sig.global.buscarpersona'
+    }, config));
+    return fld;
+}
+
+function PERSONAL(name, label, config) {
+    config = config || {};
+    if(config.allowBlank === false) config.labelStyle = 'color:red;' + (config.labelStyle || '');
+    var fld = new Ext.ux.Search( Ext.apply({
+        hiddenName:name,
+        fieldLabel:label,
+        allowBlank:true,
+        valueField: 'personalid',
+        displayField: 'nombres',
+        include: rootSIG + 'global/buscarpersonal.js',
+        className: 'sig.global.buscarpersonal'
+    }, config));
+    return fld;
+}
+
+function UBIGEO(name, label, config){
+    return SEARCH(name, label, Ext.apply({
+        valueField: 'idubigeo',
+        displayField: 'vcnombre',
+        include: rootAOFYS + 'search/ubigeo.js',
+        className: 'ao.search.ubigeo'
+    }, config));
+}
+
+function UBIGEO_CP(name, label, config) {
+    config = config || {};
+    if(config.allowBlank === false) config.labelStyle = 'color:red;' + (config.labelStyle || '');
+    var fld = new Ext.ux.Search( Ext.apply({
+        hiddenName:name,
+        fieldLabel:label,
+        allowBlank:true,
+        valueField: 'ubigeoid',
+        displayField: 'nombre',
+        include: rootSIG + 'global/buscarcentropoblado.js',
+        className: 'sig.global.buscarcentropoblado',
+        singleton: true
+    }, config));
+    return fld;
+}
+
+function DOCUMENTO(tipodocname, numerodocname, label, config) {
+    config = config || {};
+    if(config.allowBlank === false) config.labelStyle = 'color:red;' + (config.labelStyle || '');
+    config.width = config.width || 350;
+    config.allowBlank = config.allowBlank || false;
+    
+    var combo = COMBO(tipodocname, label, config.store || sig.storeTipoDocumento, {value: config.valueCombo || '', minListWidth:150, allowBlank: config.allowBlank, anchor: '-0', labelStyle: config.labelStyle || ''});
+    var text = TEXT(numerodocname, '', 20, {value: config.valueText || '', width: 100, allowBlank: config.allowBlank});
+    combo.on('select', function(cmb, r, ri){
+        if(r){
+            text.minLength = r.json[2] || 0;
+            text.maxLength = r.json[2] || 20;
+        } else {
+            text.minLength = 0;
+            text.maxLength = 20;
+        }
+        text.validate();
+    });
+    combo.oldSetValue = combo.setValue;
+    combo.setValue = function(v){
+        this.oldSetValue(v);
+        var r = this.store.getById(v);
+        if(r){
+            text.minLength = r.json[2] || 0;
+            text.maxLength = r.json[2] || 20;
+        } else {
+            text.minLength = 0;
+            text.maxLength = 20;
+        }
+        text.validate();
+    };
+    
+    var fld = COLUMN(config, [
+        FORM({columnWidth:0.9}, combo),
+        FORM({width: 100, hideLabels: true}, text)
+    ]);
+    return fld;
+}
+
+*/

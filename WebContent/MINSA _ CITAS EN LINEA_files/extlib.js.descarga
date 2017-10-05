@@ -1,0 +1,1977 @@
+/*
+ * MILKO E. SANCHEZ CASABONA
+ * Ext JS Library 4.0.1
+ */
+
+Ext.ns('byt', 'Ext.ux');
+
+/************ Modificaciones realizadas directamente en la libreria Ext ***************/
+
+// Ext.form.Labelable.labelAlign
+//      labelAlign : 'left'             -->     labelAlign : 'right'
+
+// ext-all-debug.js(1308)   if (a === null) {   --> if(!a) {
+
+
+
+//TODO revisar porque no funciona --> Ext.override(Ext.form.Labelable, {labelAlign : 'right'});
+/* // forma de establecer parametros por defecto a los FIELD's
+    fieldDefaults: {
+        labelAlign: 'right',
+        labelWidth: 100
+    }
+*/
+
+Ext.Loader.setConfig({
+    
+    enabled: true,
+    
+    disableCaching: false,
+    
+    paths: {
+        'byt': './byt'
+    }
+    
+});
+
+Ext.enableFx = false;
+
+
+var JS = {
+    
+    loaded : {},
+    
+    include : function(url, callback, scope, synchronous){
+        if(Ext.isArray(url)){
+            Ext.each(url, function(it){
+                JS.include(it, undefined, undefined, synchronous);
+            });
+            if(Ext.isFunction(callback))
+                callback.call(scope || window);
+        } else {
+            if(JS.loaded[url]){
+                if(Ext.isFunction(callback))
+                    callback.call(scope || window);
+            } else {
+                JS.loaded[url] = true;
+                Ext.Loader.loadScriptFile(url, callback || Ext.emptyFn, Ext.emptyFn, scope, synchronous);
+            }
+        }
+    },
+    
+    isInclude : Ext.emptyFn,
+    
+    _onReadyApp : [],
+    
+    _isAppLoaded : false,
+    
+    onReadyApp : function(fn, scope){
+        if(JS._isAppLoaded === false)
+            JS._onReadyApp.push({fn: fn, scope: scope});
+        else
+            fn.call(scope || window);
+    }
+    
+};
+
+Ext.require(['Ext.data.ArrayStore', 'Ext.form.Panel'], function(){
+    Ext.form.Panel.prototype.baseCls = 'x-plain';
+});
+
+Ext.require(['Ext.form.field.Date', 'Ext.form.field.Time'], function(){
+    Ext.form.field.Date.prototype.format = 'd/m/Y';
+    if(Ext.form.field.Time){
+        Ext.apply(Ext.form.field.Time.prototype, {
+            minText : "La hora debe ser igual o mayor a {0}",
+            maxText : "La hora debe ser igual o menor a {0}",
+            invalidText : "{0} no es una hora v&#225;lida"
+        });
+    }
+});
+
+Ext.useShims = false;
+
+
+/*****************************************************************************/
+
+Ext.widgetByConfig = function(config){
+    
+    return Ext.widget(config.xtype, config);
+    
+};
+
+/*****************************************************************************/
+
+Ext.BLANK_IMAGE_URL = (Ext.isIE6 || Ext.isIE7) ? 'ext/images/s.gif' : 'data:image/gif;base64,R0lGODlhAQABAID/AMDAwAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==';
+
+/*****************************************************************************/
+
+Ext.require('Ext.panel.Panel', function(){
+    
+    Ext.panel.Panel.prototype.onDestroy2 = Ext.panel.Panel.prototype.onDestroy;
+    
+    Ext.panel.Panel.override({
+        onDestroy : function(){
+            var me = this;
+            for(w in me.winChilds){
+                me.winChilds[w].destroy();
+                delete me.winChilds[w];
+            }
+            delete me.winChilds;
+            Ext.panel.Panel.prototype.onDestroy2.call(me);
+        },
+        
+        registerChild : function(child){
+            var me = this;
+            if(!me.winChilds){
+                me.winChilds = {};
+            }
+            var w = me.winChilds[child.id];
+            if(w) return;
+            me.winChilds[child.id] = child;
+        },
+        
+        unghost: function(show, matchPosition) {
+            var me = this;
+            if (!me.ghostPanel) {
+                return;
+            }
+            if (show !== false) {
+                me.el.show();
+                if (matchPosition !== false) {
+                    var basePos = Ext.fly(this.renderTo || Ext.getBody()).getXY();
+                    var gp = me.ghostPanel.getPosition();
+                    me.setPosition(gp[0] - basePos[0], gp[1] - basePos[1]);
+                }
+                if (me.floatingItems) {
+                    me.floatingItems.show();
+                }
+                Ext.defer(me.focus, 10, me);
+            }
+            me.ghostPanel.el.hide();
+        }
+    });
+});
+
+/*****************************************************************************/
+
+Ext.require('Ext.window.Window', function(){
+    
+    //Ext.window.Window.prototype.afterShow2 = Ext.window.Window.prototype.afterShow;
+    
+    Ext.override(Ext.window.Window, {
+    
+        onEsc : function(k, e) {
+            if(e) e.stopEvent();
+            this[this.closeAction]();
+        },
+        
+        afterShow : function(){
+            //Ext.window.Window.prototype.afterShow2.apply(this, arguments);
+            this.callOverridden();
+            
+            // Posicionarse en el primer objeto valido
+            var f = this.form;
+            if(f){
+                if(f.form) f = f.form;
+                if(f.focusFirst) f.focusFirst();
+            }
+        }
+        
+    });
+});
+
+/*****************************************************************************/
+
+Ext.require('Ext.container.AbstractContainer', function(){
+    Ext.override(Ext.container.AbstractContainer, {
+        
+        findByItemId : function(itemId) {
+            if(!itemId) return null;
+            var me = this,
+                p = null;
+            me.cascade(function(c){
+                if(c.itemId == itemId){
+                    p = c;
+                    return false;
+                }
+            });
+            return p;
+        },
+        
+        findDockedByItemId : function(itemId) {
+            if(!itemId) return null;
+            var me = this,
+                p = null;
+            var cascade = function(c){
+                if(c.itemId == itemId){
+                    p = c;
+                    return false;
+                } else if(c.items){
+                    c.items.each ? c.items.each(cascade) : Ext.each(c.items, cascade);
+                }
+            };
+            if(me.dockedItems)
+                me.dockedItems.each(cascade);
+            return p;
+        },
+        
+        afterRender : function() {
+            var me = this;
+            me.getLayout();
+            me.callParent();
+            Ext.Function.defer(function(){
+                if(me.getKeyMap)
+                    me.getKeyMap();
+            }, 500, me);
+        }
+        
+    });
+});
+
+
+/*****************************************************************************/
+
+Ext.require('Ext.form.Basic', function(){
+    
+    Ext.override(Ext.form.Basic, {
+    
+        getFields : function() {
+            var fields = this._fields;
+            if (!fields) {
+                fields = this._fields = Ext.create('Ext.util.MixedCollection', false, function(o){
+                    return o.getName();
+                });
+                fields.addAll(this.owner.query('[isFormField]'));
+            }
+            return fields;
+        },
+    
+        findField : function(id) {
+            return this.getFields().map[id];
+        },
+    
+        focusFirst : function() {
+            var i, f, its = this.getFields().items;
+            for(i=0, len = its.length; i < len; i++){
+                f = its[i];
+                if (f.disabled===false && f.hidden===false && f.readOnly===false && f.inputType != 'hidden'){
+                    Ext.Function.defer(f.focus, 100, f);
+                    return true;
+                }
+            }
+            return false;
+        }
+    
+    });
+    
+    Ext.form.Basic.prototype.ff = Ext.form.Basic.prototype.findField;
+});
+
+
+/*****************************************************************************/
+
+Ext.require('Ext.grid.column.Column', function(){
+    
+    Ext.override(Ext.grid.column.Column, {
+        
+        menuDisabled : true
+        
+    });
+});
+
+
+/*****************************************************************************/
+
+Ext.require('Ext.form.field.ComboBox', function(){
+    
+    Ext.override(Ext.form.field.ComboBox, {
+        
+        doQuery : function(queryString, forceAll) {
+            queryString = queryString || '';
+            
+            var me = this,
+                qe = {
+                    query: queryString,
+                    forceAll: forceAll,
+                    combo: me,
+                    cancel: false
+                },
+                store = me.store,
+                isLocalMode = me.queryMode === 'local';
+    
+            if (me.fireEvent('beforequery', qe) === false || qe.cancel) {
+                return false;
+            }
+            
+            queryString = qe.query;
+            forceAll = qe.forceAll;
+    
+            if (forceAll || (queryString.length >= me.minChars)) {
+                
+                me.expand();
+    
+                if (!me.queryCaching || me.lastQuery !== queryString) {
+                    me.lastQuery = queryString;
+                    store.clearFilter(!forceAll);
+                    if (isLocalMode) {
+                        if (!forceAll) {
+                            store.filter({
+                                property: me.displayField,
+                                value: queryString/*,
+                                anyMatch: true*/
+                            });
+                            //store.filter(me.displayField, queryString);
+                        }
+                    } else {
+                        store.load({
+                            params: me.getParams(queryString)
+                        });
+                    }
+                }
+    
+                if (me.getRawValue() !== me.getDisplayValue()) {
+                    me.ignoreSelection++;
+                    me.picker.getSelectionModel().deselectAll();
+                    me.ignoreSelection--;
+                }
+    
+                if (isLocalMode) {
+                    me.doAutoSelect();
+                }
+                if (me.typeAhead) {
+                    me.doTypeAhead();
+                }
+            }
+            return true;
+        }
+        
+    });
+});
+
+
+/************************** Ext.grid.feature.RowBody ******************************/
+
+Ext.require('Ext.grid.feature.RowBody', function(){
+    
+    Ext.override(Ext.grid.feature.RowBody, {
+        
+        getAdditionalData: function(data, idx, record, orig) {
+            var headerCt = this.view.headerCt,
+                colspan  = headerCt.getColumnCount();
+    
+            return {
+                rowBody: this.renderer ? this.renderer(data, idx, record, orig) : '',
+                rowBodyCls: this.rowBodyCls,
+                rowBodyColspan: colspan
+            };
+        }
+    });
+});
+
+/************************** Ext.data.Store ******************************/
+
+Ext.require('Ext.data.Store', function(){
+    
+    Ext.data.Store.prototype.loadDataOriginal = Ext.data.Store.prototype.loadData;
+    
+    Ext.override(Ext.data.Store, {
+        
+        loadData: function(data, append) {
+            Ext.data.Store.prototype.loadDataOriginal.apply(this, arguments);
+            this.fireEvent('load', this, data, true);
+        }
+    
+    });
+});
+
+
+/************************** Ext.grid.CheckColumn ******************************/
+
+Ext.define('Ext.grid.column.Check', {
+    requires: ['Ext.grid.column.Column'],
+    extend: 'Ext.grid.column.Column',
+    alias: ['widget.checkcolumn'],
+
+    header: '&#160;',
+
+    altText: '',
+    
+    sortable: false,
+    
+    resizable: false,
+    
+    iconClsON: Ext.baseCSSPrefix + 'check-col-icon-on',
+    
+    iconClsOFF: Ext.baseCSSPrefix + 'check-col-icon-off',
+    
+    constructor: function(config) {
+        var me = this,
+            cfg = Ext.apply({}, config);
+        
+        me.callParent([cfg]);
+        
+        me.renderer = function(v, meta) {
+
+            meta.tdCls += ' ' + Ext.baseCSSPrefix + 'check-col-cell';
+
+            v = '<img alt="' + me.altText + '" src="' + Ext.BLANK_IMAGE_URL +
+                '" class="' + Ext.baseCSSPrefix + 'check-col-icon ' + (v ? me.iconClsON : me.iconClsOFF) + ' ' + Ext.baseCSSPrefix + 'check-col-' + me.dataIndex + '" />';
+
+            return v;
+        };
+    },
+
+    destroy: function() {
+        delete this.renderer;
+        return this.callParent(arguments);
+    },
+    
+    processEvent : function(type, view, cell, recordIndex, cellIndex, e){
+        var me = this,
+            t = e.getTarget(),
+            r, check;
+        if(t.className && t.className.indexOf(Ext.baseCSSPrefix + 'check-col-' + me.dataIndex) != -1){
+            if (type == 'click') {
+                //var g = me.up('gridpanel');
+                r = view.store.getAt(recordIndex);
+                check = !r.data[me.dataIndex];
+                r.set(me.dataIndex, check);
+                r.commit();
+                if(Ext.isFunction(me.handler))
+                    me.handler.call(me.scope || me, r, recordIndex, check);
+            }
+        }
+
+        return me.callParent(arguments);
+    }
+    
+});
+
+/************************** Ext.grid.LinkColumn ******************************/
+
+Ext.define('Ext.grid.column.Link', {
+    requires: ['Ext.grid.column.Column'],
+    extend: 'Ext.grid.column.Column',
+    alias: ['widget.linkcolumn'],
+
+    header: '&#160;',
+
+    sortable: false,
+    
+    constructor: function(config) {
+        var me = this,
+            cfg = Ext.apply({}, config);
+        
+        me.callParent([cfg]);
+        
+        me.renderer = function(v, meta) {
+
+            //meta.tdCls += ' ' + Ext.baseCSSPrefix + 'check-col-cell';
+
+            v = '<a href="#" class="' + Ext.baseCSSPrefix + 'link-col">' + v + '</a>';
+
+            return v;
+        };
+    },
+
+    destroy: function() {
+        delete this.renderer;
+        return this.callParent(arguments);
+    },
+    
+    processEvent : function(type, view, cell, recordIndex, cellIndex, e){
+        var me = this,
+            t = e.getTarget(),
+            r;
+        if(t.className && t.className.indexOf(Ext.baseCSSPrefix + 'link-col') != -1){
+            if (type == 'click') {
+                e.stopEvent();
+                //var g = me.up('gridpanel');
+                r = view.store.getAt(recordIndex);
+                if(Ext.isFunction(me.handler))
+                    me.handler.call(me.scope || me, r, recordIndex);
+            }
+        }
+        
+        return me.callParent(arguments);
+    }
+    
+});
+
+/********************************* byt.Login *********************************/
+
+Ext.define('byt.Login', {
+    
+    requires : ['Ext.Window', 'Ext.form.FormPanel'],
+    extend  : 'Ext.Window',
+    modal   : false,
+    //width   : '100%',
+    //height  : '100%',
+    baseCls: 'background_login',
+    closable: false,
+    resizable: false,
+    isLock  : false,
+    draggable: false,   
+    plain: false,
+    
+    initComponent : function(){
+    
+        var me = this;
+        
+        me.addEvents('ok', 'cancel');
+        /*var buttons = [ '->',
+            { text:'<b>Aceptar</b>', handler: me.ok, scope: this }
+        ];
+        if(me.closable) buttons.push({ text:'Cancelar', handler: me.cancel, scope: this });*/
+        
+        var img = new Ext.panel.Panel({
+            region: 'center',
+            layout : 'absolute',
+            border: 0,
+            bodyPadding: 0,
+            html:            
+                           '<div class="mascara01">'+
+                           '<div class="mascara02"></div>'+
+                           '<div class="mascara03"></div>'+
+                           '<div class="logo_minsa"></div>'+
+                           '<div class="logo_his"></div>'+
+                           '</div>'+
+                           '<div id="wrap">'+
+                           '<div class="log_tit">Ingrese sus Credenciales</div>'+
+                          '<div class="log_pie">Ministerio de Salud del Perú - Derechos Reservados 2013</div>'+
+                             '</div>',
+                         
+            items:[
+              me.dcp = CREATE(HIDDEN('_dcp')),
+              me.mlkuser = CREATE(TEXT('mlkuser', 'Usuario', 20, { allowBlank: false, height: 25})),
+              me.mlkpass = CREATE(TEXT_ini('mlkpass', 'Contraseña', 20, { inputType:'password', height: 25})),
+              BUTTON3('Iniciar Sesión', me.ok, me, {  })
+         
+          
+                //BUTTON('<font color="294b66"><b>Iniciar Sesión<b></font>', me.okis, me, {x:20, y: 285, height: 30}),
+                //BUTTON('<font color="294b66"><b>Configurar Contraseña</b></font>', me.okis, me, {x:20 , y: 320, height: 30})
+                
+            ]
+
+        });
+        
+        //me.bbar = buttons;
+        me.keys = { key: 13, handler: me.ok, scope: this };
+        me.items = [img];
+        
+        me.callParent();
+        //me.form = form.form;
+    },
+
+    show : function(p) {
+        p = p || {};
+        var me = this;
+        me.callParent();
+        //me.setZIndex(19000);
+        me.dcp.setValue(p._dcp);
+    },
+
+    ok : function () {
+        var me = this;
+        if(!me.mlkuser.value || !me.mlkpass.value){
+            Ext.Msg.message('<b>Estimado Usuario</b>, debe ingresar los datos solicitados');
+            return;
+        }
+        var p = {_dcp:me.dcp.value, mlkuser:me.mlkuser.value, mlkpass:me.mlkpass.value};
+        if(me.fireEvent('ok', me, p) !== false){
+            me.onEsc();
+        }
+    },
+
+    cancel : function(){
+        var me = this;
+        me.fireEvent('cancel', me);
+        me.onEsc();
+    }
+
+});
+
+/************************************ Ext.button.Link ***************************/
+
+Ext.define('Ext.button.Link', {
+    
+    alias: 'widget.link',
+    requires : ['Ext.button.Button'],
+    extend  : 'Ext.button.Button',
+    alternateClassName: 'Ext.Link',
+    isLink: true,
+    baseCls: Ext.baseCSSPrefix + 'lnk',
+    ariaRole: 'link',
+    href: '#',
+    targetSize: true,
+    renderTpl:
+        '<em class="{splitCls}">' +
+            '<a' +
+                '<tpl if="href"> href="{href}"</tpl>' +
+                '<tpl if="target"> target="{target}"</tpl>' +
+                '<tpl if="tabIndex"> tabIndex="{tabIndex}"</tpl> role="link">' +
+                '<span class="{baseCls}-inner">{text}</span>' +
+            '</a>' +
+        '</em>' ,
+    menuAlign: 'tl-tr?',
+    
+    getHref: function() {
+        var me = this;
+        return me.href == '#' ? false : me.callParent();
+    },
+    
+    getTemplateArgs: function() {
+        var me = this,
+            ta = me.callParent();
+        ta.target = me.target;
+        return ta;
+    }
+
+
+});
+
+/********************************* Ext.Dialog *********************************/
+
+Ext.define('Ext.window.Dialog', {
+    
+    alias: 'widget.dialog',
+    requires : ['Ext.window.Window'],
+    extend: 'Ext.window.Window',
+    alternateClassName: 'Ext.Dialog',
+    closeAction: 'hide',
+    layout: 'fit',
+    isDialog: true,
+    modal: true,
+    constrainHeader: true,
+    
+    getRenderTo : function(){
+        var me = this,
+            p = me.parent;
+        while(p && p.parent)
+            p = p.parent;
+        return p && p.tab ? p.el : null;
+    },
+    
+    initComponent : function(){
+        var me = this,
+            parent = me.parent;
+        
+        me._isModal = me.modal;
+        me.modal = false;
+        
+        if(parent){
+            me.renderTo = me.getRenderTo() || Ext.getBody();
+            /*
+            if(parent instanceof Ext.window.Window || parent instanceof Ext.window.Dialog){
+                parent.on({
+                    'hide': function(){
+                            me.hide();
+                        }
+                });
+            }
+            
+            if(me._isModal){
+                var parentEl = parent.el;
+                me.on({
+                    'show': function(){
+                            parentEl.mask();
+                        },
+                    'hide': function(){
+                            parentEl.unmask();
+                        }
+                });
+                parent.on({
+                    'activate': function(){
+                            Ext.WindowManager.bringToFront(me);
+                        }
+                });
+            }
+            */
+            if(parent.registerChild){
+                parent.registerChild(this);
+            }
+            
+        }
+        me.callParent();
+    },
+    
+    showModal : function(){
+        var me = this,
+            parentEl = me.parent.el;
+        
+        parentEl.mask();
+        
+        me.on('hide', function(){
+            parentEl.unmask();
+        }, me, {single: true});
+        
+        me.show.apply(me, arguments);
+    }
+    
+    
+});
+
+/************************ Ext.Msg.message *************************************/
+
+Ext.require('Ext.window.MessageBox', function(){
+
+    var msgCt,
+        dh = Ext.core.DomHelper,
+        delay = 5000;
+    
+    function __createBox(cls, format){
+        format = Ext.String.format.apply(Ext.String, [format[0], Ext.Array.toArray(format, 1)]);
+        
+        if(!msgCt){
+        msgCt = dh.insertFirst(Ext.getBody(), {id:'message-div'}, true);
+        }
+        
+        var div = ['<div class="', cls, '">', format, '</div>'].join(''),
+            m = dh.append(msgCt, {html: div}, true);
+        
+        msgCt.alignTo(document, 'b-b');
+        m.slideIn('b', { duration: 500 });
+        m.ghost('b', { duration: 500, delay: delay, remove:true });
+    }
+    
+    Ext.Msg.error = function(format){
+        __createBox('error', Ext.Array.toArray(arguments));
+    };
+    
+    Ext.Msg.message = function(format){
+        __createBox('message', Ext.Array.toArray(arguments));
+    };
+
+});
+
+/*************************************** Ext.ux.ComboBoxRemote ***************************************/
+
+Ext.define('Ext.ux.ComboBoxRemote', {
+    
+    extend: 'Ext.form.field.ComboBox',
+    
+    alias: 'widget.comboremote',
+    
+    triggerCls: 'x-form-search-trigger',
+    
+    queryMode: 'remote',
+    
+    typeAhead: true,
+    
+    loadingText: 'Buscando...',
+    
+    forceSelection: true,
+    
+    // Parámetros
+    include         : '',
+    className       : '',
+    displayField    : '',
+    valueField      : '',
+        
+    initComponent : function(){
+        var me = this;
+        me.callParent();
+        JS.include(me.include);
+        me.baseParams = me.baseParams || {};
+    },
+
+    onTriggerClick : function(){
+        var me = this,
+            p = Ext.apply({}, me.baseParams);
+        if (!me.readOnly && !me.disabled) {
+            me.getSearch().show(p);
+            me.inputEl.focus();
+        }
+        
+    },
+    
+    getSearch : function(){
+        var me = this,
+            owner = me.ownerCt;
+        while(owner && owner.ownerCt)
+            owner = owner.ownerCt;
+    
+        if(!me.search) {
+            var params = Ext.apply({parent: owner, searching:true, modal:true, closeAction: 'hide'}, me.dialogConfig),
+                cls = Ext.decode(me.className),
+                text = '';
+            
+            if(cls.superclass){
+                me.search = new cls(params);
+            } else {
+                me.search = cls(params);
+            }
+            me.search.on('select', function(r){
+                if (Ext.isArray(r))
+                    r = r[0];
+                if (r && r.data) {
+                    if(typeof me.displayField == 'function')
+                        text = me.displayField.call(me.scope || me, r);
+                    else
+                        text = r.data[me.displayField];
+                    me.store.loadData([r.data]);
+                    me.setValue(r.data[me.valueField]);
+                    me.fireEvent('select', me, [r]);
+                }
+                        
+            }, me);
+        }
+        
+        return me.search;
+    }
+    
+    
+});
+
+
+/*************************************** Ext.ux.Search ***************************************/
+
+Ext.define('Ext.ux.Search', {
+    
+    requires : ['Ext.form.field.Trigger'],
+    extend: 'Ext.form.field.Trigger',
+    alias: 'widget.search',
+    
+    trigger1Cls: 'x-form-search-trigger',
+    trigger2Cls: 'x-form-clear-trigger',
+
+    include: '',
+    className: '',
+    displayField: '',
+    valueField: '',
+    
+    initComponent : function(){
+        var me = this;
+        me.addEvents('select', 'beforeshow', 'reset');
+        me.callParent();
+        JS.include(me.include);
+        me.baseParams = me.baseParams || {};
+    },
+    
+    getSearch : function(){
+        var owner = this.ownerCt;
+        while(owner && owner.ownerCt)
+            owner = owner.ownerCt;
+    
+        if(!this.search) {
+            var params = Ext.apply({parent: owner, searching:true, modal:true, closeAction: 'hide'}, this.dialogConfig);
+            var cls = Ext.decode(this.className);
+            if(this.singleton === true){
+                if(!cls.singleton){
+                    if(cls.superclass){
+                        cls.singleton = new cls(params);
+                    } else {
+                        cls.singleton = cls(params);
+                    }
+                }
+                this.search = cls.singleton;
+            } else {
+                if(cls.superclass){
+                    this.search = new cls(params);
+                } else {
+                    this.search = cls(params);
+                }
+            }
+        }
+
+        this.search.parent = owner;
+        this.search.on('select', this.setValue, this);
+        this.search.on(this.search.closeAction, function(){
+            this.search.un('select', this.setValue, this);
+        }, this, { single: true });
+        return this.search;
+    },
+
+    setValue: function (value) {
+        var me = this,
+            fireevent = false,
+            record = null,
+            text = '',
+            f;
+        if (Ext.isArray(value))
+            value = value[0];
+        if (value && value.data) {
+            fireevent = true;
+            record = value;
+            if(typeof me.displayField == 'function')
+                text = me.displayField.call(me.scope || me, record);
+            else
+                text = record.data[me.displayField];
+
+            value = record.data[me.valueField];
+        }
+        
+        me.value = value;
+        me.setRawValue(text);
+        me.checkChange();
+        
+        me.validate();
+        if (fireevent) {  // disparar cuando se selecciona desde el buscador
+            me.fireEventSelect(value, record);
+        }
+    },
+
+    fireEventSelect: function (value, record) {
+        var me = this;
+        if (typeof me.handler == 'function')
+            me.handler.call(me.scope || me, me, value, record);
+        me.fireEvent('select', me, value, record);
+    },
+
+    getValue: function () {
+        return this.value;
+    },
+
+    getSubmitValue: function () {
+        return this.value;
+    },
+    
+    setRawValue : function(t){
+        this.callParent(arguments);
+        this.validate();
+    },
+    
+    onTrigger1Click : function(){
+        if(this.readOnly || this.disabled) return;
+        var P = Ext.apply({}, this.baseParams),
+            s = this.getSearch();
+        if(this.fireEvent('beforeshow', P, s) !== false){
+            (s.showModal || s.show).call(s, P);
+        }
+    },
+
+    onTrigger2Click: function () {
+        if (this.readOnly || this.disabled) return;
+        this.setValue('');
+        this.fireEventSelect('', null);
+    }
+    
+    
+});
+
+/********************************** UPLOAD *********************************/
+
+Ext.ux.Upload = function(config){
+    
+    return new Ext.Dialog(Ext.apply({
+    
+        title : 'Subir archivo al Servidor',
+        width : 500,
+        height: 250,
+    
+        initComponent : function(){
+            this.addEvents('upload');
+            this.bbar = [ '->',
+                { text:'<b>Aceptar</b>', handler:this.ok,    scope:this, iconCls:'tb-save'}, 
+                { text:'Cancelar',       handler:this.onEsc, scope:this, iconCls:'tb-exit'}
+            ];
+            var form = new Ext.FormPanel({
+                fileUpload: true,
+                frame: true,
+                baseCls: 'x-plain',
+                bodyStyle: 'padding-top:10px;',
+                items: [
+                    TEXT('nombarc', 'Nombre', 200, {anchor: '-20'}),
+                    DATE('fechregarc', 'Fecha'),
+                    {  
+                        xtype: 'fileuploadfield',
+                        emptyText: 'Seleccione una archivo ... ',
+                        fieldLabel: 'Archivo',
+                        name: 'vcfile',
+                        anchor: '-20'/*,
+                        listeners: {
+                            scope: this,
+                            'fileselected': function(fu, v){
+                                    this.form.ff('nombarc').setValue(v);
+                                }
+                        }*/
+                    },
+                    TEXTAREA('descarc', 'Descripción', 4000, {anchor: '-20 -90'})
+                ]
+            });
+    
+            this.items = form;
+            Ext.Dialog.prototype.initComponent.call(this);
+            this.form = form.form;
+        },
+    
+        show : function(p) {
+            p = p || {};
+            Ext.Dialog.prototype.show.call(this);
+            this.form.reset();
+        },
+    
+        ok : function () {
+            if(!ISVALID(this.form))
+                return;
+            var p = {C:'UP', idarchivo: this.parent.idarchivo};
+            var url = 'archivo'+ '?' + Ext.urlEncode(p);
+            
+            this.form.submit({
+                waitMsg :'Cargando....',
+                url     : url,
+                params  : p,
+                scope   : this,
+                success : function(o, d){
+                    if(this.fireEvent('upload', d.result) !== false)
+                        this.onEsc();
+                },
+                failure: function(c, d){
+                    Ext.Msg.error(d.result.message);
+                }
+            });
+        }
+    
+    }, config));
+    
+};
+
+/********************************** showPrint ********************************/
+
+showPrint = function(){
+    var _frmPrint = null;
+    return function(params){
+        if(!_frmPrint){
+            _frmPrint = new Ext.print({width:550});
+        }
+        _frmPrint.show(params);
+    };
+}();
+
+/************************ Ext.ux.form.field.DateTime ****************************/
+
+Ext.define('Ext.ux.form.field.DateTime', {
+    requires : ['Ext.form.FieldContainer', 'Ext.form.field.Field'],
+    extend:'Ext.form.FieldContainer',
+    mixins: {
+        field: 'Ext.form.field.Field'
+    },
+    alias: 'widget.datetimefield',
+    layout: 'hbox',
+    width: 265,
+    height: 22,
+    combineErrors: true,
+    msgTarget : 'side',
+
+    dateCfg: {},
+    timeCfg: {},
+
+    initComponent: function() {
+        var me = this;
+        me.buildField();
+        me.callParent();
+        me.dateField = me.down('datefield');
+        me.timeField = me.down('timefield');
+        me.initField();
+    },
+
+    //@private
+    buildField: function(){
+        var me = this;
+        me.items = [
+            Ext.apply({
+                xtype: 'datefield',
+                format: 'd/m/Y',
+                width: 100
+            }, me.dateCfg),
+            Ext.apply({
+                xtype: 'timefield',
+                format: 'H:i',
+                width: 65
+            }, me.timeCfg)
+        ];
+    },
+
+    getValue: function() {
+        var value,date = this.dateField.getSubmitValue(),time = this.timeField.getSubmitValue();
+        if(date){
+            if(time){
+                var format = this.getFormat();
+                value = Ext.Date.parse(date + ' ' + time,format);
+            }else{
+                value = this.dateField.getValue();
+            }
+        }
+        return value;
+    },
+
+    setValue: function(value){
+        if(!Ext.isDate(value)){
+            value = Ext.Date.parseDate(String(value), 'd/m/Y h:i');
+        }
+        this.dateField.setValue(value);
+        this.timeField.setValue(value);
+    },
+
+    getSubmitData: function(){
+        var me = this,
+            value = me.getValue(),
+            format = me.getFormat(),
+            data = {};
+
+        data[me.getName()] = value ? Ext.Date.format(value, format) : '';
+        
+        return data;
+    },
+
+    getFormat: function(){
+        return (this.dateField.submitFormat || this.dateField.format) + " " + (this.timeField.submitFormat || this.timeField.format);
+    }
+    
+});
+
+/******************************** Ext.ux.iframe **********************************/
+
+Ext.define('Ext.ux.IFrame', {
+    
+    requires: ['Ext.Component'],
+    
+    extend: 'Ext.Component',
+    
+    alias: 'widget.iframe',
+
+    src: 'print-html.html',
+    
+    autoEl: {
+        tag: 'iframe',
+        frameBorder: 'no'
+    },
+
+    initComponent : function(){
+        var me = this;
+        me.addEvents('print');
+        me.callParent();
+    },
+
+    onRender : function(ct, position){
+        var me = this;
+        
+        me.callParent(arguments);
+        
+        //iframe.style['background-color'] = 'white';
+        //me.el.setSize('100%', '100%');
+        
+        me.setUrl(me.src);
+    },
+    
+    setUrl : function(url){
+        var me = this;
+        if(!url) return;
+        if(me.rendered)
+            me.el.dom.src = url;
+        me.src = url;
+    },
+
+    update : function(html){
+        var me = this;
+        if(typeof me.el.dom.contentWindow.update == 'function'){
+            me.el.dom.contentWindow.update(html);
+        } else {
+            Ext.Function.defer(me.update, 100, me, [html]);
+        }
+    },
+    
+    print : function(){
+        var me = this;
+        me.el.dom.contentWindow.toPrint();
+        me.fireEvent('print', me);
+    },
+    
+    load : function(o){
+        var me = this;
+
+        if(typeof o != 'object' || !o.url){
+            Ext.Msg.message('Falta los parametros o el URL.');
+            return;
+        }
+
+        me.options = o;
+        if(o.params && typeof o.params.paramstoreport == 'object')
+            o.params.paramstoreport = Ext.encode(o.params.paramstoreport);
+
+        callServer(o.url, o.params || {}, function(v, j){
+            j = j || {};
+            if(j.urlFile){
+                window.open('reports?C=DL&f=' + j.urlFile, '_blank');
+            } else {
+                me.update(v);
+            }
+        }, me, {mask: false});
+    }
+    
+});
+
+
+
+/*********************************** Ext.print ********************************/
+
+Ext.define('Ext.print', {
+    
+    extend: 'Ext.window.Dialog',
+    
+    title: 'Imprimir',
+    width: 400,
+    height:400,
+    closeAction: 'hide',
+    maximizable: true,
+    
+    initComponent : function(){
+        this.addEvents('print');
+        this.items = [{
+            itemId : 'iframe',
+            xtype: 'iframe'
+        }];
+        this.bbar = ['->',
+            {text:'<b>Imprimir</b>', handler: this.printWindow, scope: this, iconCls: 'tb-print'},
+            {text:'<b>Exportar</b>',  iconCls: 'tb-export', menu: [
+                {text:'PDF', handler: Ext.Function.bind(this.exportar, this, ['PDF']), scope: this, iconCls: 'tb-pdf'},
+                {text:'EXCEL', handler: Ext.Function.bind(this.exportar, this, ['EXCEL']), scope: this, iconCls: 'tb-xls'}
+            ]},
+            '-',
+            {text:'<b>Cerrar</b>', handler: this.hide, scope: this}
+        ];
+        this.callParent();
+    },
+    
+    getIndicator : function(){
+        if(!this.indicator){
+            this.indicator = new Ext.Window({
+                width: 200, height: 80,
+                x: Ext.getBody().getWidth() - 210, y: 10,
+                closeAction: 'hide',
+                layout: 'fit',
+                resizable: false,
+                //closable : false,
+                //draggable: false,
+                header: false,
+                bodyStyle: 'padding:10px;',
+                items: HTML('<div><img src="shared/blue-loading.gif" width="32" height="32" style="margin-right:8px;" align="absmiddle"/><b>Generando reporte...</b></div>')
+            });
+            this.registerChild(this.indicator);
+        }
+        return this.indicator;
+    },
+    
+    show : function(o){
+        o = o || {};
+        o.url = o.url || 'reports';
+
+        // Si solo se ve el PDF sin callServer
+        if(o.urlUri && !o.params){
+            window.open(j.urlUri, '_blank');
+            return;
+        }
+        
+        if(o.params && typeof o.params.paramstoreport == 'object')
+            o.params.paramstoreport = Ext.encode(o.params.paramstoreport);
+        
+        this.options = o;
+        
+        if(o.value){
+            delete this.options.params;
+            this.showReport(o.value);
+            return;
+        }
+        /*
+        var outputtype = o.params['outputtype'] || o.params['outputType'] || '';
+        if(outputtype.toLowerCase() == 'email'){
+            Ext.Msg.prompt('Ingrese Correo', 'Ingrese Correo Elétronico', function(btn, email){
+                if(btn == 'ok'){
+                    o.params.email = email;
+                    this.onCallServer(o);
+                }
+            }, this, true, o.params['email'] || '');
+            
+        } else {
+            this.onCallServer(o);
+        }
+        */
+        this.onCallServer(o);
+    },
+    
+    onCallServer : function(o){
+        if(o.async === true){       // async
+                o.params.async = '1';
+                this.getIndicator().show();
+                postServer(o.url, o.params || {}, function(v, j){ // llamar para procesar el reporte
+                    // j.keyAsync   -->   clave del Thread asincrono
+                    Ext.Function.defer(this.initAsync, 3000, this, [v, j]);
+                }, this, this.showError);
+            
+        } else {                    // sync
+                
+                this.getIndicator().show();
+                postServer(o.url, o.params || {}, function(v, j){
+                    this.showReport(v, j);
+                }, this, this.showError);
+            
+        }
+    },
+    
+    initAsync : function(v1, j1){
+        postServer('reports', {C:'ASYNCVERIFY', keyAsync: j1.keyAsync}, function(v, j){
+            if(j.running === true){   // aún ejecutandose
+                Ext.Function.defer(this.initAsync, 3000, this, [v1, j1]);   // volver a llamar
+            } else {
+                this.showReport(v1, j1);                      // mostrar reporte
+            }
+        }, this, this.showError);
+    },
+    
+    showReport : function(v, j){
+        j = j || {};
+        this.getIndicator().hide();
+        if(this.options.params && this.options.params.outputtype != 'HTML' && j.urlFile){
+            window.open('reports?C=DL&f=' + j.urlFile, '_blank');
+        } else {
+            Ext.print.superclass.show.call(this);
+
+            if(typeof this.options.width != 'undefined')
+                this.setWidth(this.options.width);
+            if(typeof this.options.height != 'undefined')
+                this.setHeight(this.options.height);
+            if(this.options.title)
+                this.setTitle(this.options.title);
+            
+            //this.bottomToolbar.items.items[2].setVisible(this.options['export'] !== false);
+            this.updateIFrame(v);
+        }
+    },
+    
+    showError : function(error, j){
+        this.getIndicator().hide();
+        Ext.Msg.error(error);
+    },
+    
+    updateIFrame : function(v){
+        this.getComponent('iframe').update(v);
+    },
+    
+    printWindow : function(){
+        this.getComponent('iframe').print();
+        this.fireEvent('print', this, this.options);
+    },
+
+    exportar : function(type){
+        this.options.params.outputtype = type;
+        this.show(this.options);
+    }
+
+});
+
+/*****************************************************************************/
+/*****************************************************************************/
+
+/*****************************************************************************/
+
+
+
+/*
+
+This file is part of Ext JS 4
+
+Copyright (c) 2011 Sencha Inc
+
+Contact:  http://www.sencha.com/contact
+
+GNU General Public License Usage
+This file may be used under the terms of the GNU General Public License version 3.0 as published by the Free Software Foundation and appearing in the file LICENSE included in the packaging of this file.  Please review the following information to ensure the GNU General Public License version 3.0 requirements will be met: http://www.gnu.org/copyleft/gpl.html.
+
+If you are unsure which license is appropriate for your use, please contact the sales department at http://www.sencha.com/contact.
+
+*/
+// feature idea to enable Ajax loading and then the content
+// cache would actually make sense. Should we dictate that they use
+// data or support raw html as well?
+
+/**
+ * @class Ext.ux.RowExpander
+ * @extends Ext.AbstractPlugin
+ * Plugin (ptype = 'rowexpander') that adds the ability to have a Column in a grid which enables
+ * a second row body which expands/contracts.  The expand/contract behavior is configurable to react
+ * on clicking of the column, double click of the row, and/or hitting enter while a row is selected.
+ *
+ * @ptype rowexpander
+ */
+Ext.define('Ext.ux.RowExpander', {
+    extend: 'Ext.AbstractPlugin',
+
+    requires: [
+        'Ext.grid.feature.RowBody',
+        'Ext.grid.feature.RowWrap'
+    ],
+
+    alias: 'plugin.rowexpander',
+
+    rowBodyTpl: null,
+
+    /**
+     * @cfg {Boolean} expandOnEnter
+     * <tt>true</tt> to toggle selected row(s) between expanded/collapsed when the enter
+     * key is pressed (defaults to <tt>true</tt>).
+     */
+    expandOnEnter: true,
+
+    /**
+     * @cfg {Boolean} expandOnDblClick
+     * <tt>true</tt> to toggle a row between expanded/collapsed when double clicked
+     * (defaults to <tt>true</tt>).
+     */
+    expandOnDblClick: true,
+
+    /**
+     * @cfg {Boolean} selectRowOnExpand
+     * <tt>true</tt> to select a row when clicking on the expander icon
+     * (defaults to <tt>false</tt>).
+     */
+    selectRowOnExpand: false,
+
+    rowBodyTrSelector: '.x-grid-rowbody-tr',
+    rowBodyHiddenCls: 'x-grid-row-body-hidden',
+    rowCollapsedCls: 'x-grid-row-collapsed',
+
+
+
+    renderer: function(value, metadata, record, rowIdx, colIdx) {
+        if (colIdx === 0) {
+            metadata.tdCls = 'x-grid-td-expander';
+        }
+        return '<div class="x-grid-row-expander">&#160;</div>';
+    },
+
+    /**
+     * @event expandbody
+     * <b<Fired through the grid's View</b>
+     * @param {HtmlElement} rowNode The &lt;tr> element which owns the expanded row.
+     * @param {Ext.data.Model} record The record providing the data.
+     * @param {HtmlElement} expandRow The &lt;tr> element containing the expanded data.
+     */
+    /**
+     * @event collapsebody
+     * <b<Fired through the grid's View.</b>
+     * @param {HtmlElement} rowNode The &lt;tr> element which owns the expanded row.
+     * @param {Ext.data.Model} record The record providing the data.
+     * @param {HtmlElement} expandRow The &lt;tr> element containing the expanded data.
+     */
+
+    constructor: function() {
+        this.callParent(arguments);
+        var grid = this.getCmp();
+        this.recordsExpanded = {};
+        // <debug>
+        if (!this.rowBodyTpl) {
+            Ext.Error.raise("The 'rowBodyTpl' config is required and is not defined.");
+        }
+        // </debug>
+        // TODO: if XTemplate/Template receives a template as an arg, should
+        // just return it back!
+        var rowBodyTpl = Ext.create('Ext.XTemplate', this.rowBodyTpl),
+            features = [{
+                ftype: 'rowbody',
+                columnId: this.getHeaderId(),
+                recordsExpanded: this.recordsExpanded,
+                rowBodyHiddenCls: this.rowBodyHiddenCls,
+                rowCollapsedCls: this.rowCollapsedCls,
+                getAdditionalData: this.getRowBodyFeatureData,
+                getRowBodyContents: function(data) {
+                    return rowBodyTpl.applyTemplate(data);
+                }
+            },{
+                ftype: 'rowwrap'
+            }];
+
+        if (grid.features) {
+            grid.features = features.concat(grid.features);
+        } else {
+            grid.features = features;
+        }
+
+        // NOTE: features have to be added before init (before Table.initComponent)
+    },
+
+    init: function(grid) {
+        this.callParent(arguments);
+
+        // Columns have to be added in init (after columns has been used to create the
+        // headerCt). Otherwise, shared column configs get corrupted, e.g., if put in the
+        // prototype.
+        grid.headerCt.insert(0, this.getHeaderConfig());
+        grid.on('render', this.bindView, this, {single: true});
+    },
+
+    getHeaderId: function() {
+        if (!this.headerId) {
+            this.headerId = Ext.id();
+        }
+        return this.headerId;
+    },
+
+    getRowBodyFeatureData: function(data, idx, record, orig) {
+        var o = Ext.grid.feature.RowBody.prototype.getAdditionalData.apply(this, arguments),
+            id = this.columnId;
+        o.rowBodyColspan = o.rowBodyColspan - 1;
+        o.rowBody = this.getRowBodyContents(data);
+        o.rowCls = this.recordsExpanded[record.internalId] ? '' : this.rowCollapsedCls;
+        o.rowBodyCls = this.recordsExpanded[record.internalId] ? '' : this.rowBodyHiddenCls;
+        o[id + '-tdAttr'] = ' valign="top" rowspan="2" ';
+        if (orig[id+'-tdAttr']) {
+            o[id+'-tdAttr'] += orig[id+'-tdAttr'];
+        }
+        return o;
+    },
+
+    bindView: function() {
+        var view = this.getCmp().getView(),
+            viewEl;
+
+        if (!view.rendered) {
+            view.on('render', this.bindView, this, {single: true});
+        } else {
+            viewEl = view.getEl();
+            if (this.expandOnEnter) {
+                this.keyNav = Ext.create('Ext.KeyNav', viewEl, {
+                    'enter' : this.onEnter,
+                    scope: this
+                });
+            }
+            if (this.expandOnDblClick) {
+                view.on('itemdblclick', this.onDblClick, this);
+            }
+            this.view = view;
+        }
+    },
+
+    onEnter: function(e) {
+        var view = this.view,
+            ds   = view.store,
+            sm   = view.getSelectionModel(),
+            sels = sm.getSelection(),
+            ln   = sels.length,
+            i = 0,
+            rowIdx;
+
+        for (; i < ln; i++) {
+            rowIdx = ds.indexOf(sels[i]);
+            this.toggleRow(rowIdx);
+        }
+    },
+
+    toggleRow: function(rowIdx) {
+        var rowNode = this.view.getNode(rowIdx),
+            row = Ext.get(rowNode),
+            nextBd = Ext.get(row).down(this.rowBodyTrSelector),
+            record = this.view.getRecord(rowNode),
+            grid = this.getCmp();
+
+        if (row.hasCls(this.rowCollapsedCls)) {
+            row.removeCls(this.rowCollapsedCls);
+            nextBd.removeCls(this.rowBodyHiddenCls);
+            this.recordsExpanded[record.internalId] = true;
+            this.view.fireEvent('expandbody', rowNode, record, nextBd.dom);
+        } else {
+            row.addCls(this.rowCollapsedCls);
+            nextBd.addCls(this.rowBodyHiddenCls);
+            this.recordsExpanded[record.internalId] = false;
+            this.view.fireEvent('collapsebody', rowNode, record, nextBd.dom);
+        }
+
+
+        // If Grid is auto-heighting itself, then perform a component layhout to accommodate the new height
+       // if (!grid.isFixedHeight()) {
+            grid.doComponentLayout();
+        //}
+        this.view.up('gridpanel').invalidateScroller();
+    },
+
+    onDblClick: function(view, cell, rowIdx, cellIndex, e) {
+
+        this.toggleRow(rowIdx);
+    },
+
+    getHeaderConfig: function() {
+        var me                = this,
+            toggleRow         = Ext.Function.bind(me.toggleRow, me),
+            selectRowOnExpand = me.selectRowOnExpand;
+
+        return {
+            id: this.getHeaderId(),
+            width: 24,
+            sortable: false,
+            resizable: false,
+            draggable: false,
+            hideable: false,
+            menuDisabled: true,
+            cls: Ext.baseCSSPrefix + 'grid-header-special',
+            renderer: function(value, metadata) {
+                metadata.tdCls = Ext.baseCSSPrefix + 'grid-cell-special';
+
+                return '<div class="' + Ext.baseCSSPrefix + 'grid-row-expander">&#160;</div>';
+            },
+            processEvent: function(type, view, cell, recordIndex, cellIndex, e) {
+                if (type == "mousedown" && e.getTarget('.x-grid-row-expander')) {
+                    var row = e.getTarget('.x-grid-row');
+                    toggleRow(row);
+                    return selectRowOnExpand;
+                }
+            }
+        };
+    }
+});
+
+/******************************************************************************/
+Ext.define('Ext.app.PortalPanel', {
+
+    extend: 'Ext.panel.Panel',
+    alias: 'widget.portalpanel',
+    requires: ['Ext.layout.component.Body'],
+    cls: 'x-portal',
+    bodyCls: 'x-portal-body',
+    defaultType: 'portalcolumn',
+    componentLayout: 'body',
+    autoScroll: true,
+    
+    initComponent: function () {
+        var me = this;
+        me.layout = {
+            type: 'column'
+        };
+        me.callParent();
+        me.addEvents({
+            validatedrop: true,
+            beforedragover: true,
+            dragover: true,
+            beforedrop: true,
+            drop: true
+        });
+        me.on('drop', me.doLayout, me);
+    },
+    
+    beforeLayout: function () {
+        var me = this,
+            b = me.layout.getLayoutItems(),
+            a = b.length,
+            c = 0,
+            d;
+        for (; c < a; c++) {
+            d = b[c];
+            d.columnWidth = 1 / a;
+            d.removeCls(['x-portal-column-first', 'x-portal-column-last']);
+        }
+        b[0].addCls('x-portal-column-first');
+        b[a - 1].addCls('x-portal-column-last');
+        return me.callParent(arguments);
+    },
+    
+    initEvents: function () {
+        var me = this;
+        me.callParent();
+        me.dd = Ext.create('Ext.app.PortalDropZone', me, me.dropConfig);
+    },
+    
+    beforeDestroy: function () {
+        var me = this;
+        if (me.dd) {
+            me.dd.unreg();
+        }
+        Ext.app.PortalPanel.superclass.beforeDestroy.call(me);
+    },
+    
+    addPortlet : function(portlet, column){
+        var me = this,
+            col,
+            title = portlet.title,
+            extra = {height : !portlet.height ? 270 : portlet.height, logueo : !portlet.logueo ? false : portlet.logueo};
+       
+        delete portlet.title;
+        
+        if(!Ext.isNumber(column)){
+            // calcular la columna donde tiene menos items
+            var numitems = 1000;
+            me.items.each(function(it, c){
+                if(it.items.length < numitems){
+                    numitems = it.items.length;
+                    column = c;
+                }
+            });
+        }
+        column = Ext.Number.constrain(column, 0, me.items.length - 1);
+        col = me.items.items[column];
+        col.add(Ext.apply({title: title, items: [portlet]},extra));
+        return portlet;
+    },
+    
+    removeAllPortlet : function(){
+        var me = this;
+        me.items.each(function(item) {
+            item.removeAll(true);
+        });
+    }
+    
+});
+
+Ext.define('Ext.app.PortalDropZone', {
+
+    extend: 'Ext.dd.DropTarget',
+    
+    constructor: function (a, b) {
+        this.portal = a;
+        Ext.dd.ScrollManager.register(a.body);
+        Ext.app.PortalDropZone.superclass.constructor.call(this, a.body, b);
+        a.body.ddScrollConfig = this.ddScrollConfig;
+    },
+    
+    ddScrollConfig: {
+        vthresh: 50,
+        hthresh: -1,
+        animate: true,
+        increment: 200
+    },
+    
+    createEvent: function (a, f, d, b, h, g) {
+        return {
+            portal: this.portal,
+            panel: d.panel,
+            columnIndex: b,
+            column: h,
+            position: g,
+            data: d,
+            source: a,
+            rawEvent: f,
+            status: this.dropAllowed
+        };
+    },
+    
+    notifyOver: function (u, t, v) {
+        var d = t.getXY(),
+            a = this.portal,
+            p = u.proxy;
+        if (!this.grid) {
+            this.grid = this.getGrid();
+        }
+        var b = a.body.dom.clientWidth;
+        if (!this.lastCW) {
+            this.lastCW = b;
+        } else {
+            if (this.lastCW != b) {
+                this.lastCW = b;
+                this.grid = this.getGrid();
+            }
+        }
+        var o = 0,
+            c = 0,
+            n = this.grid.columnX,
+            q = n.length,
+            m = false;
+        for (q; o < q; o++) {
+            c = n[o].x + n[o].w;
+            if (d[0] < c) {
+                m = true;
+                break;
+            }
+        }
+        if (!m) {
+            o--;
+        }
+        var i, g = 0,
+            r = 0,
+            l = false,
+            k = a.items.getAt(o),
+            s = k.items.items,
+            j = false;
+        q = s.length;
+        for (q; g < q; g++) {
+            i = s[g];
+            r = i.el.getHeight();
+            if (r === 0) {
+                j = true;
+            } else {
+                if ((i.el.getY() + (r / 2)) > d[1]) {
+                    l = true;
+                    break;
+                }
+            }
+        }
+        g = (l && i ? g : k.items.getCount()) + (j ? -1 : 0);
+        var f = this.createEvent(u, t, v, o, k, g);
+        if (a.fireEvent('validatedrop', f) !== false && a.fireEvent('beforedragover', f) !== false) {
+            p.getProxy().setWidth('auto');
+            if (i) {
+                p.moveProxy(i.el.dom.parentNode, l ? i.el.dom : null);
+            } else {
+                p.moveProxy(k.el.dom, null);
+            }
+            this.lastPos = {
+                c: k,
+                col: o,
+                p: j || (l && i) ? g : false
+            };
+            this.scrollPos = a.body.getScroll();
+            a.fireEvent('dragover', f);
+            return f.status;
+        } else {
+            return f.status;
+        }
+    },
+    
+    notifyOut: function () {
+        delete this.grid;
+    },
+    
+    notifyDrop: function (l, h, g) {
+        delete this.grid;
+        if (!this.lastPos) {
+            return;
+        }
+        var j = this.lastPos.c,
+            f = this.lastPos.col,
+            k = this.lastPos.p,
+            a = l.panel,
+            b = this.createEvent(l, h, g, f, j, k !== false ? k : j.items.getCount());
+        if (this.portal.fireEvent('validatedrop', b) !== false && this.portal.fireEvent('beforedrop', b) !== false) {
+            a.el.dom.style.display = '';
+            if (k !== false) {
+                j.insert(k, a);
+            } else {
+                j.add(a);
+            }
+            l.proxy.hide();
+            this.portal.fireEvent('drop', b);
+            var m = this.scrollPos.top;
+            if (m) {
+                var i = this.portal.body.dom;
+                setTimeout(function () {
+                    i.scrollTop = m;
+                }, 10);
+            }
+        }
+        delete this.lastPos;
+        return true;
+    },
+    
+    getGrid: function () {
+        var a = this.portal.body.getBox();
+        a.columnX = [];
+        this.portal.items.each(function (b) {
+            a.columnX.push({
+                x: b.el.getX(),
+                w: b.el.getWidth()
+            });
+        });
+        return a;
+    },
+    
+    unreg: function () {
+        Ext.dd.ScrollManager.unregister(this.portal.body);
+        Ext.app.PortalDropZone.superclass.unreg.call(this);
+    }
+    
+});
+
+Ext.define('Ext.app.PortalColumn', {
+    extend: 'Ext.container.Container',
+    alias: 'widget.portalcolumn',
+    layout: {
+        type: 'anchor'
+    },
+    defaultType: 'portlet',
+    cls: 'x-portal-column',
+    autoHeight: true
+});
+
+Ext.define('Ext.app.Portlet', {
+    
+    extend: 'Ext.panel.Panel',
+    alias: 'widget.portlet',
+    layout: 'fit',
+    anchor: '100%',
+    frame: true,
+    closable: true,
+    collapsible: true,
+    animCollapse: true,
+    draggable: true,
+    cls: 'x-portlet',
+    
+    doClose: function () {
+        this.el.animate({
+            opacity: 0,
+            callback: function () {
+                this.fireEvent('close', this);
+                this[this.closeAction]();
+            },
+            scope: this
+        });
+    }
+    
+});
+
+
+//Buscador Establecimiento
+function EESS(name, label, config) {
+    config = config || {};
+    var fld = new Ext.ux.Search(Ext.apply({
+        name        : name,
+        fieldLabel  : label,
+        allowBlank  : true,
+        valueField  : 'idestablecimiento',
+        displayField: 'nombest',
+        include     : 'his/establecimiento_search.js',
+        className   : 'his.establecimiento.search'
+    }, config));
+    return fld;
+}
+
+/***********setIdEstablecimiento***************************/
+Ext.define('byt.IdEessParametro', {
+    
+    requires : ['Ext.Window', 'Ext.form.FormPanel'],
+    extend  : 'Ext.Window',
+    title   : 'Seleccione Establecimiento',
+    modal   : true,
+    width   : 570,
+    height  : 103,
+    layout  : 'border',
+    closable: false,
+    bodyPadding: 10,
+    
+    initComponent : function(){
+    
+        var me = this;
+        
+        me.addEvents('ok');
+ 
+        var form = new Ext.form.FormPanel({
+            baseCls: 'x-plain',
+            region: 'center',
+            fieldDefaults: {anchor: '-20'},
+            items: [
+                EESS('idestablecimiento', 'Nombre', 20, { allowBlank: false})
+            ]
+        });
+ 
+        me.bbar = [ '->','-',
+                    { text:'<b>Guardar</b>', handler: me.ok, scope: this, iconCls: 'tb-save16' }
+                ];
+        me.keys = { key: 13, handler: me.ok, scope: this };
+        me.items = form;
+        
+        me.callParent();
+        me.form = form.form;
+    },
+
+    show : function(p) {
+        p = p || {};
+        var me = this;
+        me.callParent();
+    },
+
+    ok : function () {
+        var me = this;
+        if (!me.form.ff('idestablecimiento')) return;
+        var p = me.form.getValues();
+        if(me.fireEvent('ok', me, p) !== false){
+            me.onEsc();
+        }
+    } 
+
+});

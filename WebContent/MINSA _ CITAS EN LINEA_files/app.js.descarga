@@ -1,0 +1,103 @@
+/*
+ * MILKO E. SANCHEZ CASABONA
+ * Ext JS Library 4.0
+ */
+
+Ext.ns('byt');
+byt.rememberme = true;
+byt.IDAPP = 1;
+byt.desktop = 'byt';
+
+var MyApp,
+    SysConfig = {};
+
+
+ 
+Ext.require(['byt.App', 'Ext.util.Cookies'], function(){
+    
+    MyApp = Ext.create('byt.App', {
+    
+        timeInactivity : 100 * 60 * 1000,   // 100 minutos de Inactividad
+    
+        init :function(){
+            var me = this;
+            Ext.data.proxy.Proxy.timeout = 300000;
+    
+            Ext.Ajax.timeout = 200 * 1000;  // 200 segundos para Depuracion
+            
+            me.tools.setWidth(450);
+            
+            postServer('desktop', {C:'INIT', idapp: byt.IDAPP}, function(v){
+               
+                v = Ext.decode(v || '{}');
+                eval(v.execute || '{}');
+                
+                //JS._onReadyApp
+                for(var i = 0; i < JS._onReadyApp.length; i++){
+                    var it = JS._onReadyApp[i];
+                    if(Ext.isFunction(it.fn)){
+                        it.fn.call(it.scope || me);
+                    }
+                }
+                JS._onReadyApp = [];
+                JS._isAppLoaded = true;
+            }, me);
+        },
+        
+        /*getDataUser : function(){
+            postServer('desktop', {C:'LOGIN', S:'GETDATA', idapp: byt.IDAPP, inlevelmenu: 10}, function(v, j){
+                this.__byt = Ext.util.Cookies.get('byt');
+                var rememberme = !!SysConfig.rememberme;
+                v = Ext.decode(v);
+                
+                SysConfig = {rememberme: rememberme};
+                Ext.apply(SysConfig, v);
+                if(this.fireEvent('beforeinitsesion', SysConfig, this) === false)
+                    return;
+            }, this);
+        },*/
+    
+        createWindow : function(cls, config, js){
+            var me = this;
+            if(typeof config == 'string')
+                config = Ext.decode(config);
+            if(js){
+                JS.include(js, function(){
+                    me.createWnd(cls, config, js);
+                });
+            } else {
+                me.createWnd(cls, config);
+            }
+        },
+        
+        createWnd : function(cls, config, js){
+            var desktop = this.getDesktop();
+            config = config || {};
+            
+            if(!config.id) config.id = Ext.id();
+            //var win = desktop.container.items.map[config.id];
+            var win = "";
+            
+            if(!win){
+                //config.title = (config.title || '') + ' - ' + js;
+                if(typeof cls == 'string'){
+                    cls = Ext.decode(cls);
+                }
+                if(cls.superclass) 
+                    config = new cls(config);
+                else if (!config.initEvents)
+                    config = cls(config);
+                //Agrega los tabs los q agrego en default
+                desktop.add(config);
+            } /*else {
+                desktop.activate(win);
+            }*/
+        },
+        
+        print : function(params){
+            showPrint(params);
+        }
+    
+    });
+    
+});

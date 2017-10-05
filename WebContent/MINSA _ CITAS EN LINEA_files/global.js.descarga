@@ -1,0 +1,1458 @@
+
+Ext.ns('byt');
+
+var
+    formatNumber = Ext.util.Format.numberRenderer('0,0.00'),
+    
+    formatDate = function(v){
+            return Ext.isDate(v) ? Ext.Date.format(v, Ext.form.field.Date.prototype.format) : v;
+    },
+    
+    Messages = {
+        confirmDelete: 'El registro seleccionado será eliminado de forma permanente.<br/><br/>¿Desea continuar?',
+        confirmDesactive:'El registro seleccionado será desactivado.<br/><br/>¿Desea continuar?',
+        desactiveOk:'Registro desactivado con éxito.',
+        confirmRemove: 'El registro seleccionado será removido.<br/><br/>¿Desea continuar?',
+        exportPdf: 'Exportar a PDF',
+        formInvalid: 'Datos erroneos o falta ingresar los campos obligatorios.',
+        selectOne : 'Se debe seleccionar un registro.',
+        selectOneN : 'Se debe seleccionar al menos un registro.',
+        deleteOk: 'Registro(s) eliminado(s) con éxito.',
+        saveOk: 'Registro guardado.',
+        confirmContinue: 'Se necesita confirmar para continuar.<br/><br/>¿Desea continuar?',
+        valid: 'El registro ya ha sido ingresado.' 
+    };
+
+function ARRAY_TO_STRING(array, fieldSeparator, rowSeparator){
+    if(typeof fieldSeparator !== 'string')
+        fieldSeparator = ',';
+
+    var r = 0,
+        len = array.length;
+    for(; r < len; r++){
+        array[r] = array[r].join(fieldSeparator);
+    }
+
+    if(typeof rowSeparator == 'string')
+        array = array.join(rowSeparator);
+
+    if(array instanceof Array)
+        array = Ext.encode(array);
+
+    return array;
+}
+
+function executeWhenAssert(assert, fn, milliseconds){
+    var idInterval = 0;
+    var fnInterval = function(){
+        var result = eval(assert);
+        if(result){
+            clearInterval(idInterval);
+            if(typeof fn === 'function')
+                fn();
+            else
+                eval(fn);
+        }
+    };
+    idInterval = setInterval(fnInterval, milliseconds || 500);
+}
+
+function postServer(url, params, onCallBack, scope, config) {
+    if(Ext.isFunction(config))
+        config = {onErrorCB: config};
+    config = config || {};
+    config.method = 'POST';
+    callServer(url, params, onCallBack, scope, config);
+}
+
+function callServer(url, params, onCallBack, scope, config) {
+    if(Ext.isFunction(config))
+        config = {onErrorCB: config};
+    config = config || {};
+    if(config.mask !== false && scope && scope.el && scope.el.mask)
+        scope.el.mask('&#160;', 'x-mask-loading');
+    
+    Ext.Ajax.request(Ext.apply({
+        url: url,
+        params: params,
+        method: 'POST',//'GET',
+        onCallBack: onCallBack,
+        scope: scope,
+        onErrorCB: config.onErrorCB,
+        success: function(res, opt){
+            if(config.mask !== false && scope && scope.el && scope.el.unmask)
+                scope.el.unmask();
+            
+            var json;
+            try {
+              json = res.getResponseHeader('X-JSON');
+              json = json ? eval('(' + json + ')') : null;
+            } catch (e) { json = null; }
+
+            if (json !== null && json.error) {
+                if (typeof opt.onErrorCB == 'function'){
+                    opt.onErrorCB.call(opt.scope || window, json.message, json);
+                } else {
+                    Ext.Msg.error(json.message);
+                }
+            } else {
+                if (typeof opt.onCallBack == 'function'){
+                    opt.onCallBack.call(opt.scope || window, res.responseText, json);
+                }
+            }
+        },
+        failure: function(res, opt){
+            if(config.mask !== false && scope && scope.el && scope.el.unmask)
+                scope.el.unmask();
+            Ext.Msg.error(res.statusText);
+        }
+    }, config));
+}
+
+function CREATE(comp){
+    return Ext.createWidget(comp.xtype, comp);
+}
+
+function __FORMAT_CONFIG(name, label, config){
+    config = config || {};
+    if(!label) config.labelSeparator = '';
+    if(config.readOnly === true) config.cls = (config.cls || '') + 'x-form-readonly ';
+    //if(config.allowBlank === false) config.labelStyle = 'color:red;' + (config.labelStyle || '');
+    //if(!name) config.labelStyle = 'font-weight:bold;text-decoration:line-through;';
+    return config;
+}
+
+function FIELDCONTAINER(label, items, config){
+    config = config || {};
+    var i=0, it;
+    for(; i<items.length; i++){
+        it = items[i];
+        if(typeof it == 'string')
+            items[i] = {xtype: 'displayfield', value: it};
+        else{
+            it.hideLabel = !it.fieldLabel;
+        }
+    }
+    return Ext.apply({
+        xtype : 'fieldcontainer',
+        fieldLabel: label,
+        layout: 'hbox',
+        items: items,
+        combineErrors: true
+    }, config);
+}
+
+function TEXT(name, label, maxlen, config) {
+    name = name.toLowerCase();
+    config = __FORMAT_CONFIG(name, label, config);
+    var txt = Ext.apply({
+        xtype: 'textfield',
+        baseCls: 'text_ini',
+        name: name,
+        fieldLabel: label,
+        maxLength: maxlen,
+        selectOnFocus: true/*,
+        listeners: {
+            'afterrender': function(txt){
+                    txt.el.dom.setAttribute('maxLength', txt.maxLength);
+                },
+            'change': function(txt, v){
+                     if(txt.vtype != 'email')
+                        txt.setValue(String(v).toUpperCase());
+                }
+        }*/
+    }, config);
+    
+    return txt;
+}
+
+function TEXT_ini(name, label, maxlen, config) {
+    name = name.toLowerCase();
+    config = __FORMAT_CONFIG(name, label, config);
+    var txt = Ext.apply({
+        xtype: 'textfield',
+        baseCls: 'text_ini_pass',
+        name: name,
+        fieldLabel: label,
+        maxLength: maxlen,
+        selectOnFocus: true/*,
+        listeners: {
+            'afterrender': function(txt){
+                    txt.el.dom.setAttribute('maxLength', txt.maxLength);
+                },
+            'change': function(txt, v){
+                     if(txt.vtype != 'email')
+                        txt.setValue(String(v).toUpperCase());
+                }
+        }*/
+    }, config);
+    
+    return txt;
+}
+       
+
+function DISPLAY(name, label, config) {
+    return Ext.apply({
+        xtype: 'displayfield',
+        fieldLabel: label,
+        name: name
+    }, config);
+}
+
+
+function CHECK(name, label, config) {
+    return Ext.apply({
+        xtype: 'checkboxfield',
+        name: name.toLowerCase(),
+        fieldLabel:label
+    }, config);
+}
+
+function __STORE_INIT_PARAMS(config, fields){
+    config = config || {};
+    
+    Ext.applyIf(config, {autoLoad: true});
+    
+    if(typeof fields == 'string'){
+        fields = fields.replace(/[ ]/g, '').split(',');
+    }
+    if (!(fields instanceof Array)){
+        fields = ['id', 'text'];
+    }
+    
+    // Listeners
+    var listeners = config.listeners || {};
+    
+    if(config.beforeLoad){
+        listeners.beforeload = function(store, oper){
+            oper.params = oper.params || {};
+            return config.beforeLoad.call(config.scope || window, oper.params, oper);
+        };
+    }
+    var model = config.model;
+    if(!model){
+        
+        if(!config.idProperty){
+            var idProperty = (config.id === undefined ? fields[0] : config.id);
+            delete config.id;
+            if(idProperty){
+                config.idProperty = idProperty;
+            }
+        }
+        
+        model = Ext.define('Ext.data.Store.ImplicitModel-' + (Ext.id()), {
+            extend: 'Ext.data.Model',
+            fields: fields,
+            idProperty: config.idProperty
+        });
+    }
+    
+    Ext.apply(config, {
+        model: model,
+        listeners: listeners
+    });
+    
+    // reader
+    if(!config.reader){
+        config.reader = {type: 'array' /*idProperty: config.idProperty*/};
+    } else if(Ext.isString(config.reader) && config.reader == 'json'){
+        config.reader = {type: config.reader, root: 'items'};
+    }
+    
+    return config;
+}
+
+function SIMPLESTORE(value, fields, config){
+    value = value || [];
+    if (!fields){
+        if(value.length === 0 || (Ext.isArray(value[0]) && value[0].length > 1))
+            fields = ['id', 'nombre'];
+        else
+            fields = ['nombre'];
+    }
+    config = __STORE_INIT_PARAMS(config, fields);
+    var reader = config.reader;
+    delete config.reader;
+    return new Ext.data.ArrayStore(Ext.apply({
+            data    : value,
+            proxy   : new Ext.data.proxy.Memory({
+                    model   : config.model,
+                    reader  : reader
+            })
+    }, config));
+}
+
+function STORE(url, baseParams, fields, config, configobsoleto){
+    if(config === true){
+        config = Ext.apply({autoLoad: false}, configobsoleto);
+    }
+    config = __STORE_INIT_PARAMS(config, fields);
+    var reader = config.reader;
+    delete config.reader;
+    return new Ext.data.Store(Ext.apply({
+            proxy   : new Ext.data.proxy.Ajax({
+                    url         : url,
+                    //reader      : config.reader || new Ext.data.reader.Array({ /*idProperty: config.idProperty*/ }),
+                    reader      : reader,
+                    extraParams : baseParams
+            })
+    }, config));
+}
+
+function TREESTORE(url, baseParams, fields, config){
+    config = __STORE_INIT_PARAMS(config, fields);
+    delete config.reader;
+    return new Ext.data.TreeStore(Ext.apply({
+            proxy   : {
+                type: 'ajax',
+                extraParams: baseParams,
+                url: url,
+                reader: { type: 'json'/*, idProperty: config.idProperty*/ }
+            },
+            root    : { expanded: true }
+    }, config));
+}
+
+function CHECKCOLUMN(dataIndex, config){
+    return Ext.apply({
+        xtype:'checkcolumn', 
+        dataIndex: dataIndex, 
+        width: 30, 
+        sortable: false, 
+        resizable: false
+    }, config);
+}
+
+function COLMODEL(cols, defaults){
+    if (!(cols instanceof Array)) return null;
+        
+    var cm = [], i, c, e, len;
+    defaults = defaults || {};
+    
+    for(i=0, len = cols.length; i < len; i++){
+        c = cols[i];
+        if(Ext.isArray(c)){
+            e = {dataIndex: c[0], header: c[1]};
+            if(c[2] <= 1)
+                e.flex = c[2] * 10;
+            else
+                e.width = c[2];
+            
+            Ext.applyIf(e, defaults);
+            if(typeof c[3] == 'object')
+                Ext.apply(e, c[3]);
+            
+            cm.push(e);
+        } else {
+            cm.push(c);
+        }
+    }
+    
+    delete cols;
+    return cm;
+}
+
+function MENULEFT(config, items) {
+    var defs = Ext.apply({ style: 'margin:5px;', bodyStyle: 'padding:5px', collapsible: true, animCollapse: false, titleCollapse: true }, config.defaults || {}),
+        i, pnl;
+    for(i=0; i < items.length; i++){
+        items[i].preventHeader = !items[i].title;
+    }
+    
+    delete config.defaults;
+    pnl = Ext.apply({
+        xtype: 'panel',
+        region: 'west',
+        width: 130,
+        split: true,
+        baseCls: 'x-plain',
+        defaults: defs,
+        items: items
+    }, config);
+    return pnl;
+}
+
+function LINK(text, handler, scope, config) {
+    return new Ext.button.Link(Ext.apply({
+        text: text,
+        handler: handler,
+        scope: scope
+    }, config));
+}
+
+function BUTTON(text, handler, scope, config) {
+    return Ext.apply({
+        xtype: 'button',
+        text: text,
+        handler: handler,
+        scope: scope
+    }, config);
+}
+function BUTTON3(text, handler, scope, config) {
+    return Ext.apply({
+        xtype: 'button',
+        baseCls: 'btn_ini',
+        text: text,
+        handler: handler,
+         scope: scope
+    }, config);
+}
+
+function BUTTONN(text, handler, scope, config) {
+    return Ext.apply({
+        xtype: 'button',
+        baseCls: 'btn_nn',
+        text: text,
+        handler: handler,
+         scope: scope
+    }, config);
+}
+
+function BUTTONB(text, handler, scope, config) {
+    return Ext.apply({
+        xtype: 'button',
+        baseCls: 'btn_bb',
+        text: text,
+        handler: handler,
+         scope: scope
+    }, config);
+}
+
+
+ 
+
+function HTML(html, config){
+    return Ext.apply({
+        xtype: 'displayfield',
+        html: html
+    }, config);
+}
+
+function SEPARATOR(){
+    return {
+        xtype: 'displayfield',
+        cls: 'x-separator',
+        html: '<hr/>'
+    };
+}
+
+function GETSELECTED(obj, multiple, msg){
+    if(obj.selModel.selected.getCount() > 0){
+        var rs = obj.selModel.getSelection();
+        return multiple === true ? rs : rs[0];
+    }
+    Ext.Msg.message(msg || (multiple === true ? Messages.selectOneN : Messages.selectOne));
+    return false;
+}
+
+function HIDDEN(name, value) {
+    return { xtype: 'hiddenfield', name:name.toLowerCase(), value: value || '' };
+}
+
+function TEXTAREA(name, label, maxlen, config) {
+    name = name.toLowerCase();
+    config = __FORMAT_CONFIG(name, label, config);
+    return Ext.apply({
+        xtype: 'textareafield',
+        name: name,
+        fieldLabel: label,
+        selectOnFocus: true,
+        maxLength: maxlen/*,
+        listeners: {
+            'afterrender': function(txt){
+                    txt.el.dom.setAttribute('maxLength', txt.maxLength);
+                },
+            'change': function(txt, v){
+                     txt.setValue(String(v).toUpperCase());
+                }
+        }*/
+    }, config);
+}
+
+function NUMBER(name, label, config) {
+    name = name.toLowerCase();
+    config = __FORMAT_CONFIG(name, label, config);
+    if(typeof config.dec == 'number') config['decimalPrecision'] = config.dec;
+    if(typeof config.min == 'number') config['minValue'] = config.min;
+    if(typeof config.max == 'number') config['maxValue'] = config.max;
+    delete config.dec;
+    delete config.min;
+    delete config.max;
+    return Ext.apply({
+        xtype: 'numberfield',
+        name: name,
+        fieldLabel: label
+    }, config);
+}
+
+function DATE(name, label, config) {
+    name = name.toLowerCase();
+    config = __FORMAT_CONFIG(name, label, config);
+    return Ext.apply({
+            xtype: 'datefield',
+            name: name,
+            fieldLabel: label,
+            selectOnFocus: true,
+            width: 200,
+            maxValue: config.maxValue || (typeof system == 'undefined' ? new Date() : (new Date()))
+        }, config);
+}
+
+function COMBO(name, label, store, config) {
+    if (arguments.length < 3) store = [];
+    if (typeof store == 'string')
+        store = Ext.decode(store);
+    if (store instanceof Array)
+        store = SIMPLESTORE(store);
+
+    name = name.toLowerCase();
+    config = __FORMAT_CONFIG(name, label, config);
+    config.listConfig = Ext.apply({resizable:{handles: 'e se'}}, config.listConfig);
+    
+    config.listeners = Ext.apply({
+        'beforequery' : function(cb) {
+                var cmb = cb.combo;
+                if (cmb.lastKey == Ext.EventObject.DELETE) {
+                    cmb.clearValue();
+                    cmb.reset();
+                    cb.cancel = true;
+                    cmb.lastKey=0;
+                    cmb.fireEvent('select', cmb, null, -1);
+                    return false;
+                }
+            }
+    }, config.listeners);
+    
+    var fields = store.getProxy().getReader().getFields();
+    var combo = Ext.apply({
+            xtype: 'combobox',
+            value: '',
+            name: name,
+            fieldLabel: label,
+            store: store,
+            valueField: fields[0].name,
+            displayField: fields.length > 1 ? fields[1].name : fields[0].name,
+            typeAhead: false,
+            queryMode: 'local',
+            emptyText:'Seleccione...',
+            triggerAction: "all",
+            allowBlank: true,
+            maxHeight: 201,
+            forceSelection: true,
+            selectOnFocus: true,
+            onLoad : function(){
+                    var me = this,
+                        value = me.getValue();
+                    Ext.form.field.ComboBox.prototype.onLoad.call(me);
+                    if(!me.store) return;
+                    if(value){
+                        var r = me.store.getById(value);
+                        if(r) me.setValue(value);
+                        else me.reset();
+                    } else if(me.allowBlank === false){
+                        r = me.store.getAt(0);
+                        if(r) me.setValue(r.data[me.valueField]);
+                    }
+            }
+        }, config);
+/*
+   store.on({
+        scope: combo,
+        remove : function(st, r){
+            var me = this;
+            if(r.id == me.value){
+                me.reset();
+                me.fireEvent('select', me, null, -1);
+            }
+        }
+    });
+*/
+    return combo;
+}
+
+function TAB(config, items){
+    config = config || {};
+    /*
+    config.myActiveTab = config.activeTab;
+    delete config.activeTab;
+    if(typeof config.myActiveTab == 'undefined')
+        config.myActiveTab = 0;
+    */
+    
+    return Ext.apply({
+        xtype: 'tabpanel',
+        items: items,
+        //activeTab: 0,
+        border: false,
+        deferredRender: false/*
+        listeners: {
+            tabchange: function(t, item){
+                    if(item.doLayout)
+                        item.doLayout();
+                },
+            render: function(t){
+                    if(typeof t.myActiveTab != 'undefined') {
+                        t.setActiveTab.defer(100, t, [t.myActiveTab]);
+                        delete t.myActiveTab;
+                    }
+                }
+        }
+        */
+    }, config);
+}
+
+function FORM(config, items){
+    return Ext.apply({
+        layout: 'anchor',
+        baseCls: 'x-plain',
+        items: items
+    }, config);
+}
+
+function GETVALUES(form){
+    var r = form.getFieldValues();
+    Ext.Object.each(r, function(k, v){
+        if(Ext.isDate(v)){
+            r[k] = Ext.Date.format(v, Ext.form.field.Date.prototype.format);
+        }
+    });
+    return r;
+}
+
+function ISVALID(f){
+    if(!f) return true;
+    if(typeof (f.ISVALID || f.isValid) != 'function'){
+        f = f.form;
+    }
+    if (f && (typeof (f.ISVALID || f.isValid) == 'function')){
+        var v = (f.ISVALID || f.isValid).call(f);
+        if(v === true)
+            return true;
+        if(typeof v != 'string')
+            v = Messages.formInvalid;
+        Ext.Msg.message(v);
+        return false;
+    }
+    return true;
+}
+
+function DELETE(grid, url, params, namePk, cb, scope){
+    var r = GETSELECTED(grid, false, params.msgNoSelect || Messages.selectOne);
+    if(!r) return;
+
+    Ext.Msg.confirm('Confirmar', params.msgConfirm || (params.disable?Messages.confirmDesactive:Messages.confirmDelete), function(btn){
+        if (btn == 'yes') {
+            delete params.msgNoSelect;
+            delete params.msgConfirm;
+            delete params.msgDisable;
+            
+            namePk = namePk ? namePk.split(',') : [];
+            for(var i=0; i < namePk.length; i++)
+                params[namePk[i]] = r.data[namePk[i]];
+            
+            postServer(url, params, function(){
+                Ext.Msg.message((params.disable?Messages.desactiveOk:Messages.deleteOk));
+                if(grid.store.remove) grid.store.remove(r);
+                else if(r.remove) r.remove(true);
+                if(typeof cb == 'function')
+                    cb.call(scope || grid, r);
+            });
+        }
+    });
+}
+
+function SEARCH(name, label, config) {
+    var fld = new Ext.ux.Search( Ext.apply({
+        name        : name,
+        fieldLabel  : label,
+        allowBlank  : true
+    }, config));
+    return fld;
+}
+
+function renderIcon(iconCls){
+    return '<div style="text-align:center"><img style="width:15px; height:15px;" class="' + iconCls + '" src="' + Ext.BLANK_IMAGE_URL + '" /></div>';
+}
+
+function UBIGEO(name, label, config){
+    return SEARCH(name, label, Ext.apply({
+        valueField  : 'idubigeo',
+        displayField: 'pathubi',
+        include     : 'mant/ubigeo.js',
+        className   : 'mant.ubigeo'
+    }, config));
+}
+
+function ORG(name, label, config) {
+    return SEARCH(name, label, Ext.apply({
+        valueField  : 'idorg',
+        displayField: 'nomborg',
+        include     : rootAOFYS + 'orgsearch.js',
+        className   : 'ao.orgsearch'
+    }, config));
+}
+
+
+function WINDOW_DIALOG(config, items, cls){
+    
+    if(!Ext.isArray(items) || items.length == 1){
+        config.title = config.title || items.title;
+        items.preventHeader = true;
+        items = Ext.isArray(items) ? items : [items];
+    }
+    
+    config = Ext.apply({
+        layout: 'fit',
+        items: items
+    }, config);
+    
+    return new cls(config);
+}
+
+function WINDOW(config, items){
+    
+    return WINDOW_DIALOG(config, items, Ext.window.Window);
+    
+}
+
+function DIALOG(config, items){
+    
+    return WINDOW_DIALOG(config, items, Ext.window.Dialog);
+    
+}
+
+byt.listselect = function(config){
+
+    return new Ext.Dialog(Ext.apply({
+        
+        autoScroll: true,
+        border: false,
+        title: 'Seleccionar',
+        width: 400,
+        height: 200,
+        // parametros obligatorios en Config --> {store, columns || colModel}
+        
+        initComponent : function(){
+            this.addEvents('select');
+            this.grid = new Ext.grid.Panel({
+                store: this.store,
+                columns: this.columns || this.colModel
+            });
+            this.bbar = ['->',
+                {text:'<b>Seleccionar</b>', handler: this.select, scope: this},
+                {text:'Cerrar', handler: this.onEsc, scope: this}
+            ];
+            this.items = [this.grid];
+            Ext.Dialog.prototype.initComponent.call(this);
+            this.grid.on('itemdblclick', this.select, this);
+        },
+        
+        reset : function(){
+            this.store.removeAll();
+        },
+
+        select : function(){
+            var recs = GETSELECTED(this.grid, true);
+            if(!recs) return;
+            if (this.fireEvent('select', recs) !== false)
+                this.onEsc();
+        }
+        
+    }, config));
+    
+};
+
+
+
+
+
+
+
+
+//TODO revisado para Ext4.0 hasta aqui
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**********************************************************************************/
+
+/*
+    Verificar si una Cadena 
+    esta contenida dentro de otra cadena o un array
+*/
+String.prototype.contains = function(s, sep){
+    if(typeof sep == 'undefined') sep = ',';
+    if(!Ext.isArray(s)) s = s.split(sep);
+    var r = s.indexOf(String(this));
+    
+    return r < 0 ? false : true;
+};
+
+/*
+    Verificar si los elementos de un array 
+    estan contenidas dentro de una cadena u otro array
+*/
+Array.prototype.contains = function(s, sep){
+    if(typeof sep == 'undefined') sep = ',';
+    if(!Ext.isArray(s)) s = s.split(sep);
+    
+    var res, i;
+    for(i=0; i < this.length; i++){
+        res = s.indexOf(this[i]);
+        if(res < 0)
+            return false;
+    }
+    return true;
+};
+
+Number.prototype.contains = function(s, sep){
+    if(typeof sep == 'undefined') sep = ',';
+    if(!Ext.isArray(s)) s = s.split(sep);
+    var r = s.indexOf(String(this));
+
+    return r < 0 ? false : true;
+};
+
+function hideAndDestroy(win) {
+    if(win){
+        win.hide();
+        win.destroy();
+    }
+}
+
+function inspect(obj){
+    var s = '', to, v;
+    for(v in obj){
+        to = typeof obj[v];
+        switch(to){
+            case 'function':
+                //s += v + ' : ' + to + '()\n'
+                break;
+            case 'string':
+                s += v + ' : "' + obj[v] + '"\n';
+                break;
+            default:
+                s += v + ' : ' + (Ext.encode(obj[v])).substr(0, 100) + '\n';
+                break;
+        }
+    }
+    alert(s);
+}
+
+// usar storeID (registerStores de Ext)
+function UNIQUESTORE(url, baseParams, fields, config){
+    config = config || {};
+    config.id = (config.id === undefined ? 0 : config.id);
+    
+    var uniqueid = url + (baseParams.C || '') + (baseParams.S || '');
+    byt.uniqueStore = byt.uniqueStore || {};
+    
+    var st = byt.uniqueStore[uniqueid];
+    
+    if(st) return st;
+    
+    st = STORE(url, baseParams, fields, config);
+    byt.uniqueStore[uniqueid] = st;
+    return st;
+}
+
+function DELETE_MULTIPLE(grid, url, params, namePk, cb, scope){
+    var r = grid.getSelections();
+    if(!r.length){
+        Ext.Msg.message(params.msgNoSelect || Messages.selectOneN);
+        return;
+    }
+    Ext.MessageBox.confirm('Confirmar', params.msgConfirm || Messages.confirmDelete, function(btn){
+        if (btn == 'yes') {
+            delete params.msgNoSelect;
+            delete params.msgConfirm;
+            params[namePk || 'id'] = getIds(r).join(',');
+            callServer(url, params, function(){
+                Ext.Msg.message(Messages.deleteOk);
+                for(var i=0, len=r.length; i < len; i++)
+                    grid.store.remove(r[i]);
+                if(typeof cb == 'function')
+                    cb.call(scope || grid);
+            });
+        }
+    });
+}
+
+
+/******************** Leer los Ids de los Data.Record *****************************/
+
+function getIds(recs){
+    var ids = [];
+    Ext.each(recs, function(r){ ids.push(r.id); });
+    return ids;
+}
+
+function callServerSync(url, params, onCallBack, scope, onErrorCB) {
+    callServer(url, params, onCallBack, scope, onErrorCB, {syncRequest: true});
+}
+
+/********************************* callSP *************************************/
+// LLamar a un Stored Procedure
+/*
+    options: {
+        schema: 'GDBYT',
+        name:'pkg_tramite2.anexo_getlist',
+        params: [{}, {}, ...]
+    }
+*/
+function callSP(options, onCallBack, scope, onErrorCB){
+    if(typeof options.params == 'object'){
+        options.params = Ext.encode(options.params);
+    }
+    var o = Ext.apply({
+        C: 'EXECUTESP'
+    }, options);
+    callServer(rootFYS + 'global', o, onCallBack, scope, onErrorCB);
+}
+
+/******************************************************************************/
+
+var storeEstado = [['1', 'ACTIVO'], ['0', 'INACTIVO']],
+    storeYesNo = [['1', 'SI'], ['0', 'NO']];
+
+function renderEstado(v){
+    return '<div style="text-align:center"><img class="grid-' + (v == '1' ? 'activo' : 'inactivo') + '" src="' + Ext.BLANK_IMAGE_URL + '" /></div>';
+}
+
+function renderFileIcon(v, p, r){
+    v = v || '';
+    var ext = 'download';
+    var c = v.lastIndexOf('.');
+    if(c > 0){
+        ext = v.substr(c+1).toLowerCase();
+    }
+    var href = rootARCHIVO + '?C=DL&f=' + v;
+    if(r && r.data.filename){
+        href += '&fns=' + r.data.filename;
+    }
+    return v ? '<a style="text-align:center" href="' + href + '"><img style="height:16px;" class="tb-' + ext + '" src="' + Ext.BLANK_IMAGE_URL + '" /></a>' : v;
+}
+
+/******************************************************************************/
+
+function CHECKGROUP(name, label, items, config) {
+    name = name.toLowerCase();
+    config = __FORMAT_CONFIG(name, label, config);
+
+    // items = [['name1', 'value1', 'label1', {config}], [..., ... ]
+    var its = [];
+    if(items){
+        var i, t, 
+            len = items.length;
+        for(i=0; i < len; i++){
+            t = items[i];
+            its[i] = { id: t[0], name: t[0], inputValue: t[1] || 'X', boxLabel: t[2] || t[1] || '' };
+            if(typeof t[3] == 'object')
+                Ext.apply(its[i], t[3]);
+            if(typeof config.listeners == 'object')
+                its[i].listeners = config.listeners;
+        }
+    }
+    var cbg = new Ext.form.CheckboxGroup(Ext.apply({
+        fieldLabel: label,
+        name: name,
+        items: its
+    }, config));
+    return cbg;
+}
+
+function COLUMN(config, items){
+    config = config || {};
+    if(config.column) items = FormatColumn(config, items);
+    return Ext.apply({
+        layout: 'column',
+        baseCls: 'x-plain',
+        border: false,
+        items: items
+    }, config);
+}
+
+function TABLE(config, items){
+    config = config || {};
+    config.layout = {type: 'table', columns: config.columns/*, tableAttrs: {width: '100%'}*/};
+    delete config.columns;
+    return Ext.apply({
+        baseCls: 'x-plain',
+        border: false,
+        items: items
+    }, config);
+}
+
+function HBOX(config, items){
+    if(Ext.isArray(config))
+        items = config;
+    config = config || {};
+    config.layout = {type: 'hbox'};
+    //config.defaults = Ext.apply({flex: 1}, config.defaults);
+    for(var i=0; i < items.length; i++){
+        var it = items[i];
+        if(!it.flex && !it.width)
+            it.flex = 1;
+    }
+    return Ext.apply({
+        baseCls: 'x-plain',
+        border: false,
+        items: items
+    }, config);
+}
+
+function VBOX(config, items){
+    if(Ext.isArray(config))
+        items = config;
+    config = config || {};
+    config.layout = {type: 'vbox'};
+    config.defaults = Ext.apply({flex: 1}, config.defaults);
+    return Ext.apply({
+        baseCls: 'x-plain',
+        border: false,
+        items: items
+    }, config);
+}
+
+function COMBOREMOTE(name, label, store, config) {
+    name = name.toLowerCase();
+    config = __FORMAT_CONFIG(name, label, config);
+    config.listConfig = Ext.apply({resizable:{handles: 'e se'}}, config.listConfig);
+
+    config.listeners = Ext.apply({
+        'beforequery' : function(cb) {
+                var cmb = cb.combo;
+                if (cmb.lastKey == Ext.EventObject.DELETE) {
+                    cmb.clearValue();
+                    cmb.reset();
+                    cb.cancel = true;
+                    cmb.lastKey=0;
+                    cmb.fireEvent('select', cmb, []);
+                    return false;
+                }
+            }
+    }, config.listeners);
+
+    var fields = store.getProxy().getReader().getFields();
+    var combo = Ext.apply({
+            xtype: 'comboremote',
+            value: '',
+            name: name,
+            fieldLabel: label,
+            store: store,
+            valueField: fields[0].name,
+            displayField: fields.length > 1 ? fields[1].name : fields[0].name,
+            typeAhead: false,
+            emptyText:'Seleccione...',
+            triggerAction: "all",
+            allowBlank: true,
+            maxHeight: 201,
+            forceSelection: true,
+            selectOnFocus: true
+        }, config);
+    return combo;
+}
+
+function COMBOTEXT(name, label, store, config) {
+    config = __FORMAT_CONFIG(name, label, config);
+    return Ext.apply({
+        xtype: 'combotext',
+        name: name.toLowerCase(),
+        fieldLabel: label,
+        store: store
+    }, config);
+}
+
+function DATE2(name, label, config) {
+    name = name.toLowerCase();
+    config = __FORMAT_CONFIG(name, label, config);
+    return new Ext.form.Date2Field(
+        Ext.apply({
+            name: name,
+            fieldLabel: label,
+            selectOnFocus: true,
+            format:'d/m/Y',
+            maxValue: config.maxValue || (typeof system == 'undefined' ? new Date() : (new Date()))
+        }, config));
+}
+
+function DATETIME(name, label, config) {
+    config = __FORMAT_CONFIG(name, label, config);
+    return Ext.apply({
+        xtype: 'datetimefield',
+        name:name.toLowerCase(),
+        fieldLabel:label,
+        selectOnFocus: true/*,
+        formatDate:'d/m/Y',
+        formatTime:'H:i',
+        maxValueDate: config.maxValue || (typeof system == 'undefined' ? new Date() : (new Date()))*/
+    }, config);
+}
+
+function FIELDSET(config, items){
+    config = config || {};
+    if(config.column) items = FormatColumn(config, items);
+    return new Ext.form.FieldSet(Ext.apply({
+        autoHeight: true,
+        items: items
+    }, config));
+}
+
+function FormatColumn(config, items){
+    if(!Ext.isArray(items))
+        items = [items];
+    if(config.column){
+        // ancho de las columnas
+        var i, c, ncols, cols, vert = config.column.vertical === true, nitems = items.length;
+        cols = config.column.columns;
+        delete config.column.columns;
+        if(Ext.isArray(cols))
+            ncols = cols.length;
+        else{
+            ncols = typeof cols == 'string' ? parseInt(cols, 10) : typeof cols == 'number' ? cols : 2;
+            cols = [];
+            //for(i=0; i < ncols; i++) cols[i] = 1 / ncols;
+        }
+        ncols = Math.min(ncols, items.length);
+        for(i=0; i < ncols; i++){
+            if(typeof cols[i] != 'object'){
+                c = cols[i];
+                cols[i] = {};
+                if(c && c > 1) cols[i]['width'] = c;
+                else if(c && c <= 1) cols[i]['columnWidth'] = c;
+            }
+        }
+
+        
+        // crear las Columnas
+        var its = []; // items por columna
+        for(i=0; i < ncols; i++) its[i] = [];
+        
+        if(vert){   // Vertical
+            var nrows = Math.floor(nitems / ncols);
+            for(i=0; i < nitems; i++){
+                c = Math.floor(i / nrows);
+                its[c][its[c].length] = items[i];
+            }
+        } else {    // Horizontal
+            for(i=0; i < nitems; i++){
+                c = i % ncols;
+                its[c][its[c].length] = items[i];
+            }
+        }
+        
+        items = [];
+        for(i=0; i < ncols; i++)
+            items[i] = FORM(cols[i], its[i]);
+        items = COLUMN(config.column || {}, items);
+        delete config.column;
+    }
+    return items;
+}
+
+function FIELDPANEL(label, config, items) {
+    config = config || {};
+    if(config.column) items = FormatColumn(config, items);
+    return Ext.apply({
+        xtype: 'fieldpanel',
+        fieldLabel: label,
+        items: items
+    }, config);
+}
+
+function FIT(config, items){
+    return Ext.apply({
+        layout: 'fit',
+        items: items
+    }, config);
+}
+
+function LABEL(html, config){
+    return Ext.apply({
+        xtype: 'label',
+        html: html
+    }, config);
+}
+
+function MULTISELECT(name, label, store, config) {
+    if (arguments.length < 3) store = [];
+    if (typeof store == 'string')
+        store = Ext.decode(store);
+    if (store instanceof Array)
+        store = SIMPLESTORE(store);
+    if (!(store instanceof Ext.data.ArrayStore || store instanceof Ext.data.Store)) {
+        alert('Name = "' + name + '", Label = "' + label + '". El Store del Combo tiene que ser un Array, Ext.data.ArrayStore o Ext.data.Store.');
+        return null;
+    }
+    name = name.toLowerCase();
+    config = __FORMAT_CONFIG(name, label, config);
+    var combo = new Ext.form.MultiSelectField(Ext.apply({
+            name: name,
+            fieldLabel: label,
+            store: store,
+            valueField: store.fields.items[0].name,
+            displayField: store.fields.items.length > 1 ? store.fields.items[1].name : store.fields.items[0].name,
+            mode: 'local',
+            emptyText:'Seleccione...',
+            allowBlank: true
+        }, config));
+    return combo;
+}
+
+function RADIOGROUP(name, label, items, config) {
+    // items = [['value1', 'text1', {config}], [...}, ... ]
+    var i, t, 
+        len = items.length,
+        its = [];
+    name = name.toLowerCase();
+    config = config || {};
+    for(i=0; i < len; i++){
+        t = items[i];
+        its[i] = { boxLabel: t[1] || t[0], name: name, inputValue: t[0] };
+        if(typeof t[2] == 'object')
+            Ext.apply(its[i], t[2]);
+        if(typeof config.listeners == 'object')
+            its[i].listeners = config.listeners;
+    }
+    return new Ext.form.RadioGroup(Ext.apply({
+        //xtype: 'radiogroup',
+        name: name,
+        fieldLabel: label,
+        items: its
+    }, config));
+}
+
+function TIME(name, label, config) {
+    config = __FORMAT_CONFIG(name, label, config);
+    return Ext.apply({
+        xtype: 'timefield',
+        name:name.toLowerCase(),
+        fieldLabel:label,
+        selectOnFocus: true,
+        increment: 30,
+        minValue: '8:00am',
+        maxValue: '6:00pm',
+        format: 'H:i'
+    }, config);
+
+    /*
+    time.on("beforequery", function(cb) {
+        var cmb = cb.combo;
+        if (cmb.lastKey == 46) {
+            cmb.clearValue();
+            cmb.reset();
+            cb.cancel = true;
+            cmb.lastKey=0;
+        }
+    });
+    */
+}
+
+
+/******************************************************************************/
+
+function TRIBUTO(name, label, config) {
+    return SEARCH(name, label, Ext.apply({
+        valueField: 'id',
+        displayField: 'text',
+        include: rootRMFYS + 'search/tributoxanio.js',
+        className: 'rm.search.tributoxanio'
+    }, config));
+}
+
+function HABURB(name, label, config) {
+    return SEARCH(name, label, Ext.apply({
+        valueField: 'idhaburb',
+        displayField: 'vchaburb', /*function(r){ return r.data.vctiphaburb + ' ' + r.data.vchaburb; },*/
+        include: rootCMFYS + 'search/haburb.js',
+        className: 'cm.search.haburb'
+    }, config));
+}
+
+function VIA(name, label, config) {
+    return SEARCH(name, label, Ext.apply({
+        valueField: 'idvia',
+        displayField: 'vcvia',
+        include: rootCMFYS + 'search/via.js',
+        className: 'cm.search.via'
+    }, config));
+}
+
+function USO(name, label, config) {
+    return SEARCH(name, label, Ext.apply({
+        valueField: 'iduso',
+        displayField: 'vcnombre',
+        include: rootCMFYS + 'search/uso.js',
+        className: 'cm.search.uso'
+    }, config));
+}
+
+function ARC_ARCHIVO(name, label, config){
+    return SEARCH(name, label, Ext.apply({
+        valueField: 'idarchivo',
+        displayField: 'vcarchivo',
+        include: rootARCFYS + 'search/archivo.js',
+        className: 'arc.search.archivo'
+    }, config));
+}
+
+function CODCAT(name, label, config) {
+    return SEARCH(name, label, Ext.apply({
+        valueField: 'id_codcat',
+        displayField: 'id_codcat',
+        include: rootCMFYS + 'search/ficha.js',
+        className: 'cm.search.ficha',
+        emptyText: '...'
+    }, config));
+}
+
+function NOTARIA(name, label, config) {
+    return SEARCH(name, label, Ext.apply({
+        valueField: 'idnotaria',
+        displayField: 'vcnotaria',
+        include: rootAOFYS + 'search/notaria.js',
+        className: 'ao.search.notaria'
+    }, config));
+}
+
+/*
+function UPLOAD(name, label, config) {
+    return SEARCH(name, label, Ext.apply({
+        valueField: 'iduploadfile',
+        displayField: 'vcalias',
+        include: rootAOFYS + 'upload/explorer.js',
+        className: 'ao.upload.explorer',
+        baseParams: { idapp:5 }
+    }, config));
+}
+*/
+/************************** Leer Parametros de la URL **************************/
+
+function getParameter() {
+    var param = window.location.href.split('#');
+    if (param.length > 1) return param[1];
+    return undefined;
+}
+
+function getParameters() {
+    var result = {},
+        params = window.location.href.split('#');
+    if (params.length > 1) {
+        params = params[1].split('&');
+        params.each(function(par){
+            par = par.split('=');
+            result[par[0]] = par[1];
+        });
+    }
+    return result;
+}
+
+/******************************************************************************/
+
+(function(){
+    var storeRegistered = {};
+    var storeLoads = {};
+    
+    byt.registerStore = function(uniqueid, url, baseParams, fields, config){
+        uniqueid = uniqueid.toUpperCase();
+        config = config || {};
+        if(!storeRegistered[uniqueid]){
+            storeRegistered[uniqueid] = {
+                url: url,
+                baseParams: baseParams,
+                fields: fields,
+                config: config
+            };
+        }
+    };
+    
+    byt.getStore = function(uniqueid){
+        uniqueid = uniqueid.toUpperCase();
+        if(storeLoads[uniqueid])
+            return storeLoads[uniqueid];
+        if(storeRegistered[uniqueid]){
+            var sr = storeRegistered[uniqueid];
+            storeLoads[uniqueid] = STORE(sr.url, sr.baseParams, sr.fields, sr.config.noLoad || false, sr.config);
+            delete storeRegistered[uniqueid];
+            return storeLoads[uniqueid];
+        }
+        throw 'No se encuentra registrado el Store "' + uniqueid + '"';
+    };
+
+    byt.getStoreJS = function(schema, table, config){
+        config = config || {};
+        
+        var params, URL, rootURL;
+        var varname = config.varname || schema + '_' + table;
+        
+        if(!storeLoads[varname]){
+            storeLoads[varname] = SIMPLESTORE([], config.fields);
+            URL = config.url;
+            if(!URL) {
+                rootURL = Ext.decode('root' + schema.toUpperCase() + 'BYT');
+                URL = rootURL + 'js';
+            }
+            callServer(URL, Ext.apply({C:'TABLE', S:table}, config), function(v){
+                storeLoads[varname].loadData(Ext.decode(v || '[]'));
+            });
+        }
+        return storeLoads[varname];
+    };
+    
+})();
+
+
+/******************************************************************************/
+
+function arrayAnio(vi, vf){
+    if(typeof vi != 'number') vi = 5;
+    if(typeof vf != 'number') vf = 0;
+    
+    var arr = [], idanio = (new Date()).getFullYear();
+        for (i = idanio - vi ; i <= idanio + vf; i++)
+                arr.push([i,i]);
+        return arr; 
+}
+
+/******************************************************************************/
+
+function obtenerParametro(parameter){
+    // Obtiene la cadena completa de URL
+    var url = location.href;
+    /* Obtiene la posicion donde se encuentra el signo ?, 
+    ahi es donde empiezan los parametros */
+    var index = url.indexOf("?");
+    /* Obtiene la posicion donde termina el nombre del parametro
+    e inicia el signo = */
+    index = url.indexOf(parameter,index) + parameter.length;
+    /* Verifica que efectivamente el valor en la posicion actual 
+    es el signo = */ 
+    if (url.charAt(index) == "="){
+        // Obtiene el valor del parametro
+        var result = url.indexOf("&",index);
+        if (result == -1){result=url.length;};
+        // Despliega el valor del parametro
+        //alert(url.substring(index + 1,result));
+        
+        return url.substring(index + 1,result)
+    }
+}

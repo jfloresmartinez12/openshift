@@ -1,0 +1,77 @@
+
+Ext.define('byt.DesktopMenu', {
+    
+    extend  : 'Ext.view.View',
+    
+    cls     : 'x-desktop-menu-wrap',
+    
+    itemCls : 'x-desktop-menu-item',
+    
+    itemSelector: 'div.x-desktop-menu-item',
+    
+    overItemCls: 'x-item-over',
+    
+    trackOver: true,
+    
+    autoScroll: true,
+    
+    submenu: null,  // View a mostrar el submenu
+    
+    fields : ['idmenu', 'text', 'iconCls', 'description'],
+    
+    initComponent : function(){
+        var me = this;
+        
+        me.store = SIMPLESTORE([], me.fields);
+        
+        me.tpl = new Ext.XTemplate(
+            '<tpl for=".">',
+                '<div class="', me.itemCls, '">',
+                  '<tpl if="iconCls">',
+                    '<img src="{iconCls}" style="float:left;padding-right:5px;"/>',
+                  '</tpl>',
+                  '<span class="title">{text}</span><br/>',
+                  '<span class="legend">{description}</span>',
+                '</div>',
+            '</tpl>'
+        );
+        
+        me.callParent();
+        
+        me.on({
+            'selectionchange' : function(vi, rs){
+                    if(!me.submenu) return;
+                    if(rs.length === 0){
+                        me.submenu.store.removeAll();
+                        return;
+                    }
+                    if(rs[0].data.menu)
+                        me.submenu.addItem(rs[0].data.menu.items);
+                },
+            'itemclick' : function(vi, r){
+                    if(r.data.handler)
+                        r.data.handler();
+                }
+        });
+    },
+    
+    addItem : function(its){
+        var me = this,
+            i = 0;
+        if(Ext.isArray(its)){
+            for(; i < its.length; i++)
+                me.addItem(its[i]);
+            return;
+        }
+        
+        var s = me.store,
+            r = Ext.ModelManager.create(its, s.model);
+        s.add(r);
+    },
+    
+    removeAll : function(){
+        this.store.removeAll();
+    }
+    
+    
+});

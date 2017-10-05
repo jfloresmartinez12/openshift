@@ -1,0 +1,168 @@
+/*
+ * MILKO E. SANCHEZ CASABONA
+ * Ext JS Library 4.0
+ */
+
+Ext.define('byt.Desktop', {
+    
+    requires : ['byt.DesktopMenu', 'byt.DesktopSubMenu', 'Ext.tab.Panel', 'Ext.container.Viewport'],
+	
+    idImgAppImage : 'app-image-banner',
+    
+    constructor : function(){
+        this.initGUI();
+    },
+    
+    initGUI : function(){
+        
+        this.startMenu = new Ext.menu.Menu({
+            items   : [{text: '.'}]
+        });
+
+        var sm = Ext.create('Ext.toolbar.Toolbar', {
+            border  : false,
+            cls     : 'header-startmenu',
+            region  : 'east',
+            width   : 70,
+            items   : [
+                /*'-',
+                {
+                    width   : 50,
+                    height  : 50,
+                    menu    : this.startMenu
+                },
+                '-'*/
+            ]
+        });
+        this.tools = Ext.create('Ext.toolbar.Toolbar', {
+            border  : false,
+            region  : 'center',
+            //width   : 28,
+            height  : 28,
+            items   : []
+        });
+        
+        var submenu = new byt.DesktopSubMenu({region: 'center', border: false});
+    
+        this.viewport = new Ext.container.Viewport({
+            layout  : 'border',
+            width : 500 ,
+         
+            items   : [
+                {
+                    region      : 'north',
+                    cls         : 'header',
+                    height      : 118, 
+                    layout      : 'border',
+                    border      : false,
+                    defaults    : {border : false},
+                    items : [
+                        {
+                            region  : 'center',
+                            layout  : 'border',
+                            bodyStyle   : 'background: url(ext/images/fdo02.jpg) repeat;',
+                            items   : [{region: 'west', width: 302, baseCls: 'x-plain', html:'<div class="logo_minsa"></div>'}, this.tools]
+                       // <div style="float:left;padding-top:2px;padding-left:3px;"><img id="' + this.idImgAppImage + '" src="shared/bytss-banner2.png"/></div>
+                        },
+                       sm
+                    ]
+                },
+                this.container = new Ext.tab.Panel({
+                    resizeTabs      : true,
+                    region          : 'center',
+                    enableTabScroll : true,
+                    defaults        : {
+                        autoScroll  : true
+                    },
+                    items: [
+                    {
+                        title       : 'Inicio',
+                        closable    : false,
+                        layout      : 'border',
+                        defaults    : {border: false},
+                        hidden      : true,
+                        items       : [
+                            {
+                                region  : 'west',
+                                width   : 300,
+                                layout  : 'fit',
+                                //split   : true,
+                                //cls     : 'x-desktop',
+                                items   : [this.menu = new byt.DesktopMenu({submenu: submenu})]
+                            }, {
+                                region  : 'center',
+                                layout  : 'border',
+                                //bodyStyle   : 'background:red;',
+                                items   : [submenu/*, {region: 'east', width: 300, cls: 'logo', border: false, html: ''}*/]
+                            }
+                        ]
+                    }
+                    ]
+                })
+            ]
+        });
+    },
+    
+    getIconCls : function(cls){
+        return '';
+        /*
+        if(!cls) return '';
+        var i = 0,
+            parts = cls.split('-'),
+            num = parseInt(parts[parts.length - 1], 10);
+        
+        if(!Ext.isNumber(num))
+            return cls;
+        
+        parts = Ext.Array.toArray(parts, 0, parts.length - 1);
+        return parts.join('-');
+        */
+    },
+
+    add : function(config){
+        if(!config) return null;
+        if(!config.initEvents){
+            config = Ext.create('Ext.panel.Panel', config);
+        }
+        if(config instanceof Ext.window.Window){
+            config.show();
+        } else {
+            config.closable = true;
+            config.iconCls = this.getIconCls(config.iconCls);
+            this.container.add(config);
+            this.container.setActiveTab(config);
+            config.on('beforeclose', function(cmp){
+                if(this.container.activeTab.id == cmp.id){
+                    // Activar la pestaña anterior
+                    this.container.setActiveTab(this.container.items.indexOf(cmp) - 1);
+                }
+            }, this);
+        }
+        return config;
+    },
+    
+    activate : function(card){
+        this.container.setActiveTab(card);
+    },
+    
+    removeAll : function(){
+        var me = this.container,
+            removeItems = me.items.items.slice(),
+            i = 1,          // no eliminar la pestaña "INICIO"
+            len = removeItems.length,
+            item;
+        me.suspendLayout = true;
+        for (; i < len; i++) {
+            item = removeItems[i];
+            me.remove(item, true);
+        }
+        me.suspendLayout = false;
+        me.doLayout();
+    },
+    
+    setImage : function(urlImage){
+        //Ext.fly(this.idImgAppImage).dom.src = urlImage || 'shared/bytss-banner.png';
+    }
+
+});
+

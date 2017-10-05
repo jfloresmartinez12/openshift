@@ -1,0 +1,148 @@
+/*
+ * MILKO E. SANCHEZ CASABONA
+ * Ext JS Library 4
+ */
+
+.x-form-readonly .x-form-text {
+    background-image: none;
+}
+
+.x-form-readonly input {
+    background-color: #DFE8F6;
+}
+
+input.x-trigger-noedit {
+    background-color: #DFE8F6;
+    background-image: none;
+}
+
+.x-lnk-default-small {
+    background-color: white;
+    border-style: none;
+    padding: 2px;
+}
+
+.x-lnk {
+    background-repeat: no-repeat;
+    cursor: pointer;
+    display: block;
+    position: relative;
+    vertical-align: middle;
+    /*white-space: nowrap;*/
+    overflow: hidden;
+}
+
+.x-lnk em {
+    background-repeat: no-repeat;
+}
+
+.x-lnk * {
+    cursor: pointer;
+}
+
+.x-lnk a {
+    width: auto;
+}
+
+.x-lnk em a {
+    color: inherit;
+    display: inline-block;
+    text-decoration: none;
+}
+
+.x-lnk em a:visited {
+    color: inherit;
+}
+
+.x-lnk em a:hover {
+    text-decoration: underline;
+}
+
+.x-lnk * {
+    cursor: pointer;
+}
+
+.x-lnk-default-small .x-lnk-inner {
+    background-repeat: no-repeat;
+    font-family: tahoma,arial,verdana,sans-serif;
+    font-size: 11px;
+    font-weight: normal;
+    padding: 0 4px;
+}
+
+.x-lnk-default-toolbar-small-icon-text-left .x-lnk-inner,
+.x-lnk-default-small-icon-text-left .x-lnk-inner {
+    height: 16px;
+    line-height: 16px;
+    padding-left: 20px;
+}
+
+.x-lnk .x-lnk-inner {
+    background-color: transparent;
+    background-position: left center;
+    background-repeat: no-repeat;
+    display: block;
+/*    white-space: nowrap;*/
+}
+
+.x-lnk-arrow {
+    background-image: url("../images/icons/page-next-disabled.gif") !important;
+    display: block;
+}
+
+.x-lnk-arrow-right {
+    background: no-repeat scroll right center transparent;
+    padding-right: 10px;
+}
+
+.x-separator {
+    overflow: visible;
+    width: 100% !important;
+}
+
+#message-div {
+    position:absolute;
+    width:250px;
+    z-index:200000;
+}
+
+#message-div div.message, #message-div div.error {
+    font-family: verdana,Arial;
+    font-size:12px;
+    padding: 10px;
+}
+
+#message-div div.message {
+    color: black;
+    border: 2px solid green;
+    background-color: #A5D39A;
+}
+
+#message-div div.error {
+    color: red;
+    border: 2px solid red;
+    background-color: #FFEF8B;
+}
+
+.x-check-col-icon {
+    width : 16px;
+    height : 16px; 
+}
+
+.x-check-col-icon-on {
+    background-image: url(../resources/themes/images/default/grid/checked.gif );
+}
+
+.x-check-col-icon-off {
+    background-image: url(../resources/themes/images/default/grid/unchecked.gif );
+}
+
+.x-check-col-cell .x-grid-cell-inner {
+    padding: 1px 6px;
+}
+
+.x-link-col:visited{
+   color: blue;
+}
+
+
